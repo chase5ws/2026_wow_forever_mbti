@@ -1,10 +1,14 @@
 (() => {
   const $ = (id) => document.getElementById(id);
-  const NEW_COMBOS = ["不死族聖騎士", "矮人薩滿", "人類獵人"]; // 永恆服新開放的組合
+  const SITE_URL = "https://chase5ws.github.io/2026_wow_forever_mbti/";
+  const AUTHOR = "Chase";
+  const AUTHOR_LINK = "github.com/chase5ws";
   const PAIRS = [["E", "I"], ["S", "N"], ["T", "F"], ["J", "P"]];
+  const DIMS = ["EI", "SN", "TF", "JP"];
   const TOTAL = QUESTIONS.length;
+  const factionClass = (f) => (f === "聯盟" ? "alliance" : f === "部落" ? "horde" : "both");
 
-  // 組合每題的 4 個選項（強烈 2 分 / 稍微 1 分），用題號當種子固定洗牌，回上一題時順序不變
+  /* ================= 題目選項（強烈 2 分 / 稍微 1 分） ================= */
   QUESTIONS.forEach((q) => {
     const extra = EXTRA_OPTIONS[q.id] || [];
     const opts = [
@@ -22,8 +26,9 @@
     q.opts = opts;
   });
 
-  const answers = new Array(TOTAL).fill(null); // 存選項索引
+  const answers = new Array(TOTAL).fill(null);
   let idx = 0;
+  let current = null; // 目前顯示的結果
 
   const show = (id) => {
     document.querySelectorAll(".screen").forEach((s) => s.classList.toggle("active", s.id === id));
@@ -33,7 +38,7 @@
   const sceneHTML = (q) =>
     q.img ? `<img src="${q.img}" alt="${q.title}" onerror="this.outerHTML=SCENES.render('${q.theme}')">` : SCENES.render(q.theme);
 
-  /* ---------- 進度 ---------- */
+  /* ================= 進度 ================= */
   function buildSteps() {
     const box = $("steps");
     box.innerHTML = "";
@@ -63,7 +68,7 @@
     });
   }
 
-  /* ---------- 題目 ---------- */
+  /* ================= 題目 ================= */
   function renderQuestion() {
     const q = QUESTIONS[idx];
     $("scene").innerHTML = sceneHTML(q);
@@ -101,8 +106,9 @@
     }, 240);
   }
 
-  /* ---------- 計分（加權） ---------- */
-  function score() {
+  /* ================= 計分 ================= */
+  // 回傳每個維度「第一個字母」的百分比，例如 { E: 60, S: 20, T: 60, J: 40 }
+  function scorePct() {
     const pts = {}, cnt = {};
     answers.forEach((ai, qi) => {
       if (ai === null) return;
@@ -110,102 +116,208 @@
       pts[o.pole] = (pts[o.pole] || 0) + o.w;
       cnt[o.pole] = (cnt[o.pole] || 0) + 1;
     });
-    let type = "";
     const pct = {};
     PAIRS.forEach(([a, b]) => {
       const pa = pts[a] || 0, pb = pts[b] || 0, total = pa + pb || 1;
-      // 分數平手時，看哪一端被選的題數多
-      type += pa > pb || (pa === pb && (cnt[a] || 0) >= (cnt[b] || 0)) ? a : b;
-      pct[a] = Math.round((pa / total) * 100);
-      pct[b] = 100 - pct[a];
+      let v = Math.round((pa / total) * 100);
+      // 剛好 50% 時，看哪一端被選的題數多
+      if (v === 50) v += (cnt[a] || 0) >= (cnt[b] || 0) ? 1 : -1;
+      pct[a] = v;
     });
-    return { type, pct };
+    return pct;
+  }
+
+  // 從百分比推出完整結果（分享連結也走這裡，結果完全一致）
+  function analyze(pct) {
+    const u = {};
+    PAIRS.forEach(([a], i) => (u[DIMS[i]] = (pct[a] - 50) / 50));
+    const type = PAIRS.map(([a, b]) => (pct[a] > 50 ? a : b)).join("");
+
+    const dist = (p) => DIMS.reduce((s, d) => s + (u[d] - p[d]) ** 2, 0);
+    const match = (d) => Math.max(1, Math.min(99, Math.round(100 * (1 - d / 6))));
+
+    const races = Object.entries(RACES)
+      .map(([key, r]) => ({ key, ...r, d: dist(r.p) }))
+      .sort((x, y) => x.d - y.d)
+      .map((r) => ({ ...r, m: match(r.d) }));
+    const classes = Object.entries(CLASSES)
+      .map(([name, c]) => ({ name, ...c, d: dist(c.p) }))
+      .sort((x, y) => x.d - y.d)
+      .map((c) => ({ ...c, m: match(c.d) }));
+
+    const combos = [];
+    races.forEach((r) =>
+      COMBOS[r.key].forEach((cn) => {
+        const c = classes.find((x) => x.name === cn);
+        combos.push({ race: r, cls: c, d: r.d + c.d });
+      })
+    );
+    combos.sort((x, y) => x.d - y.d);
+
+    // 為什麼：挑出你和它最一致的兩個面向
+    const whyLines = (item) =>
+      DIMS.map((d, i) => {
+        const pole = item.p[d] >= 0 ? PAIRS[i][0] : PAIRS[i][1];
+        return { pole, s: u[d] * item.p[d], line: item.lines[pole] };
+      })
+        .filter((x) => x.s > 0.03 && x.line)
+        .sort((a, b) => b.s - a.s)
+        .slice(0, 2);
+
+    // 傾向：每個維度的強度與「影子類型」
+    const strength = PAIRS.map(([a, b], i) => {
+      const v = pct[a];
+      const lead = v > 50 ? a : b;
+      const lv = Math.max(v, 100 - v);
+      const label = lv >= 80 ? "非常明顯的" : lv >= 65 ? "明顯的" : lv >= 57 ? "稍微偏向" : "幾乎各半，略偏";
+      return { a, b, i, v, lead, lv, label };
+    });
+    const weakest = [...strength].sort((x, y) => x.lv - y.lv)[0];
+    let shadow = null;
+    if (weakest.lv < 60) {
+      const arr = type.split("");
+      arr[weakest.i] = weakest.lead === weakest.a ? weakest.b : weakest.a;
+      shadow = { type: arr.join(""), dim: DIM_NAMES[DIMS[weakest.i]] };
+    }
+
+    const best = combos[0];
+    return {
+      pct, type, races, classes, best, second: combos[1],
+      raceWhy: whyLines(best.race), clsWhy: whyLines(best.cls),
+      strength, shadow
+    };
   }
 
   function finish() {
-    const { type, pct } = score();
-    const params = new URLSearchParams({ type, p: ["E", "S", "T", "J"].map((k) => pct[k]).join("-") });
-    history.replaceState(null, "", `?${params}`);
-    renderResult(type, pct);
+    const pct = scorePct();
+    history.replaceState(null, "", `?p=${["E", "S", "T", "J"].map((k) => pct[k]).join("-")}`);
+    renderResult(analyze(pct));
   }
 
-  /* ---------- 結果 ---------- */
-  function renderResult(type, pct) {
-    const r = RESULTS[type];
-    if (!r) return show("intro");
-    const color = CLASS_COLORS[r.cls];
-    const combo = r.race + r.cls;
-    const isNew = NEW_COMBOS.includes(combo);
-    const fClass = r.faction === "聯盟" ? "alliance" : "horde";
-    const p = RESULTS[r.partner];
-    const why = WHY[type];
+  const comboName = (c) => c.race.name + c.cls.name;
+  const isNewCombo = (c) => NEW_COMBOS.includes(`${c.race.key}-${c.cls.name}`);
 
-    const dims = pct
-      ? PAIRS.map(([a, b]) => {
-          const win = type.includes(a) ? a : b;
-          const left = pct[a];
-          return `<div class="dim-row">
-            <div class="dim-labels">
-              <span class="${win === a ? "win" : ""}"><b>${a}</b> ${DIM_LABELS[a]} ${left}%</span>
-              <span class="${win === b ? "win" : ""}">${100 - left}% ${DIM_LABELS[b]} <b>${b}</b></span>
-            </div>
-            <div class="dim-bar"><i style="${win === a ? `left:0;width:${left}%` : `right:0;width:${100 - left}%`}"></i></div>
-          </div>`;
-        }).join("")
-      : "";
+  // 16 型的「典型」百分比（每個字母 80%）
+  function idealPct(type) {
+    const pct = {};
+    PAIRS.forEach(([a], i) => (pct[a] = type[i] === a ? 80 : 20));
+    return pct;
+  }
+
+  /* ================= 結果頁 ================= */
+  function renderResult(R) {
+    current = R;
+    const { best } = R;
+    const color = CLASS_COLORS[best.cls.name];
+    const fClass = factionClass(best.race.faction);
+    const t = TYPES[R.type];
+    const pt = TYPES[t.partner];
+    const partner = analyze(idealPct(t.partner)).best;
+    const topRace = R.races[0], topCls = R.classes[0];
+
+    const rankRows = (list, kind) =>
+      list.slice(0, 3).map((x, i) => {
+        const isRace = kind === "race";
+        const chosen = isRace ? x.key === best.race.key : x.name === best.cls.name;
+        return `<div class="rank-row${chosen ? " chosen" : ""}" style="--rc:${isRace ? "var(--gold)" : CLASS_COLORS[x.name]}">
+          <span class="rank-no">${i + 1}</span>
+          <span class="rank-icon ${isRace ? factionClass(x.faction) : "cls"}">${isRace ? ICONS.race(x.name) : ICONS.cls(x.name)}</span>
+          <span class="rank-name">${x.name}${chosen ? `<em>選定</em>` : ""}</span>
+          <span class="rank-bar"><i style="width:${x.m}%"></i></span>
+          <span class="rank-pct">${x.m}%</span>
+        </div>`;
+      }).join("");
+
+    const dims = R.strength.map(({ a, b, i, v, lead, label }) => `
+      <div class="dim-row">
+        <div class="dim-labels">
+          <span class="${lead === a ? "win" : ""}"><b>${a}</b> ${DIM_LABELS[a]} ${v}%</span>
+          <span class="${lead === b ? "win" : ""}">${100 - v}% ${DIM_LABELS[b]} <b>${b}</b></span>
+        </div>
+        <div class="dim-bar"><i style="${lead === a ? `left:0;width:${v}%` : `right:0;width:${100 - v}%`}"></i></div>
+        <div class="dim-strength">${DIM_NAMES[DIMS[i]]}：${label} <b>${lead}</b></div>
+      </div>`).join("");
+
+    // 第一名種族或職業沒被選上時的說明
+    let note;
+    if (topRace.key === best.race.key && topCls.name === best.cls.name)
+      note = `種族與職業都是你的第一名，這是你的<b>天選組合</b>。`;
+    else if (topRace.key === best.race.key)
+      note = `你契合度最高的職業是<b>${topCls.name}</b>，但${best.race.name}在永恆服不能當${topCls.name}，所以選了整體最契合的<b>${comboName(best)}</b>。`;
+    else if (topCls.name === best.cls.name)
+      note = `你契合度最高的種族是<b>${topRace.name}</b>，但${topRace.name}在永恆服不能當${best.cls.name}，所以選了整體最契合的<b>${comboName(best)}</b>。`;
+    else
+      note = `分開看，你最契合的是<b>${topRace.name}</b>和<b>${topCls.name}</b>；兩者加總後，最契合的可選組合是<b>${comboName(best)}</b>。`;
+
+    const whyList = (arr) =>
+      arr.length ? `<ul class="why-lines">${arr.map((x) => `<li><span class="pole">${x.pole}</span>${x.line}</li>`).join("")}</ul>` : "";
 
     const card = $("resultCard");
     card.style.setProperty("--c", color);
     card.innerHTML = `
       <div class="r-hero">
-        <p class="r-type">${type}</p>
-        <p class="r-nick">${r.nick}</p>
+        <p class="eyebrow">你的永恆服選角</p>
         <div class="emblems">
           <figure class="emblem race ${fClass}">
-            <div class="ring">${ICONS.race(r.race)}</div>
-            <figcaption><small>種族</small>${r.race}</figcaption>
+            <div class="ring">${ICONS.race(best.race.name)}</div>
+            <figcaption><small>種族</small>${best.race.name}</figcaption>
           </figure>
           <span class="plus">＋</span>
           <figure class="emblem cls">
-            <div class="ring">${ICONS.cls(r.cls)}</div>
-            <figcaption><small>職業</small>${r.cls}</figcaption>
+            <div class="ring">${ICONS.cls(best.cls.name)}</div>
+            <figcaption><small>職業</small>${best.cls.name}</figcaption>
           </figure>
         </div>
-        <p class="r-combo">${r.race}<span class="cls">${r.cls}</span></p>
+        <p class="r-combo">${best.race.name}<span class="cls">${best.cls.name}</span></p>
         <div class="badges">
-          <span class="badge ${fClass}">${r.faction}</span>
-          ${isNew ? `<span class="badge new">★ 永恆服新組合</span>` : ""}
+          <span class="badge ${fClass}">${best.race.faction}</span>
+          <span class="badge">${best.cls.role}</span>
+          ${isNewCombo(best) ? `<span class="badge new">★ 永恆服新組合</span>` : ""}
         </div>
+        <div class="r-mbti">
+          <span class="r-type">${R.type}</span>
+          <span class="r-nick">${t.nick}</span>
+        </div>
+        ${R.shadow ? `<p class="r-shadow">你的${R.shadow.dim}幾乎各半，也有 <b>${R.shadow.type}</b>「${TYPES[R.shadow.type].nick}」的影子</p>` : ""}
       </div>
       <div class="r-body">
-        <h3>為什麼是${combo}？</h3>
-        <div class="why">
-          <div class="why-row">
-            <span class="why-icon ${fClass}">${ICONS.race(r.race)}</span>
-            <div><b>為什麼是${r.race}</b><p>${why.race}</p></div>
-          </div>
-          <div class="why-row">
-            <span class="why-icon cls">${ICONS.cls(r.cls)}</span>
-            <div><b>為什麼是${r.cls}</b><p>${why.cls}</p></div>
-          </div>
+        <h3>為什麼是${best.race.name}？</h3>
+        <div class="why-row">
+          <span class="why-icon ${fClass}">${ICONS.race(best.race.name)}</span>
+          <div><p class="muted">${best.race.blurb}</p>${whyList(R.raceWhy)}</div>
         </div>
-        ${dims ? `<h3>性向分布</h3><div class="dims">${dims}</div>` : ""}
-        <h3>你的冒險者靈魂</h3>
-        <p>${r.desc}</p>
-        <h3>擅長</h3>
-        <div class="tags">${r.strengths.map((s) => `<span class="tag">${s}</span>`).join("")}</div>
-        <h3>小提醒</h3>
-        <p>${r.watch}</p>
+        <h3>為什麼是${best.cls.name}？</h3>
+        <div class="why-row">
+          <span class="why-icon cls">${ICONS.cls(best.cls.name)}</span>
+          <div><p class="muted">${best.cls.blurb}</p>${whyList(R.clsWhy)}</div>
+        </div>
+        <p class="note">${note}</p>
+
+        <h3>種族契合度</h3>
+        <div class="rank">${rankRows(R.races, "race")}</div>
+        <h3>職業契合度</h3>
+        <div class="rank">${rankRows(R.classes, "cls")}</div>
+
+        <h3>性向分布</h3>
+        <div class="dims">${dims}</div>
+
+        <h3>${R.type}・${t.nick}</h3>
+        <p>${t.desc}</p>
+        <div class="tags" style="margin-top:10px">${t.strengths.map((s) => `<span class="tag">${s}</span>`).join("")}</div>
+        <p class="muted" style="margin-top:10px">💡 ${t.watch}</p>
+
         <h3>冒險資料</h3>
         <div class="info-grid">
-          <div class="info"><small>起始地</small>${r.zone}</div>
-          <div class="info"><small>精神上像是</small>${r.like}</div>
+          <div class="info"><small>起始地</small>${best.race.zone}</div>
+          <div class="info"><small>職業定位</small>${best.cls.role}</div>
+          <div class="info wide"><small>第二人選</small>${comboName(R.second)}${isNewCombo(R.second) ? " ★" : ""}</div>
         </div>
+
         <h3>最佳隊友</h3>
-        <button class="partner" data-type="${r.partner}">
-          <span class="why-icon ${p.faction === "聯盟" ? "alliance" : "horde"}">${ICONS.race(p.race)}</span>
-          <span class="pt" style="color:${CLASS_COLORS[p.cls]}">${r.partner}</span>
-          <span>${p.race}${p.cls}<br><small style="color:var(--muted)">${p.nick}</small></span>
+        <button class="partner" data-type="${t.partner}">
+          <span class="why-icon ${factionClass(partner.race.faction)}">${ICONS.race(partner.race.name)}</span>
+          <span class="pt" style="color:${CLASS_COLORS[partner.cls.name]}">${t.partner}</span>
+          <span>${comboName(partner)}<br><small class="muted">${pt.nick}</small></span>
         </button>
       </div>`;
     card.querySelector(".partner").addEventListener("click", (e) => openType(e.currentTarget.dataset.type));
@@ -214,83 +326,266 @@
   }
 
   function openType(type) {
-    history.replaceState(null, "", `?type=${type}`);
-    renderResult(type, null);
+    history.replaceState(null, "", `?t=${type}`);
+    renderResult(analyze(idealPct(type)));
   }
 
-  /* ---------- 圖鑑 ---------- */
+  /* ================= 圖鑑 ================= */
   function renderGallery() {
-    $("grid").innerHTML = Object.entries(RESULTS)
-      .map(([t, r]) => {
-        const f = r.faction === "聯盟" ? "alliance" : "horde";
-        const isNew = NEW_COMBOS.includes(r.race + r.cls) ? " ★" : "";
-        return `<button class="cell" data-type="${t}" style="--c:${CLASS_COLORS[r.cls]}">
-          <div class="cell-top"><span class="ct">${t}</span><span class="cell-icons"><span class="cp ${f}">${ICONS.race(r.race)}</span><span class="ci">${ICONS.cls(r.cls)}</span></span></div>
-          <div class="cc">${r.race}${r.cls}${isNew}</div>
-          <div class="cn">${r.nick}</div>
-          <div class="cf ${f}">${r.faction}</div>
+    $("grid").innerHTML = Object.keys(TYPES)
+      .map((type) => {
+        const b = analyze(idealPct(type)).best;
+        const f = factionClass(b.race.faction);
+        return `<button class="cell" data-type="${type}" style="--c:${CLASS_COLORS[b.cls.name]}">
+          <div class="cell-top"><span class="ct">${type}</span><span class="cell-icons"><span class="cp ${f}">${ICONS.race(b.race.name)}</span><span class="ci">${ICONS.cls(b.cls.name)}</span></span></div>
+          <div class="cc">${comboName(b)}${isNewCombo(b) ? " ★" : ""}</div>
+          <div class="cn">${TYPES[type].nick}</div>
+          <div class="cf ${f}">${b.race.faction}</div>
         </button>`;
       })
       .join("");
-    $("grid").querySelectorAll(".cell").forEach((c) =>
-      c.addEventListener("click", () => openType(c.dataset.type))
-    );
+    $("grid").querySelectorAll(".cell").forEach((c) => c.addEventListener("click", () => openType(c.dataset.type)));
     show("gallery");
   }
 
-  /* ---------- 分享 ---------- */
-  async function share() {
-    const url = location.href;
-    const t = new URLSearchParams(location.search).get("type");
-    const r = RESULTS[t];
-    const text = r ? `我在永恆服MBTI選角測試是 ${t}「${r.nick}」：${r.race}${r.cls}！你呢？` : "永恆服MBTI選角測試";
+  /* ================= 分享圖（JPG） ================= */
+  const loadImg = (src) =>
+    new Promise((res, rej) => {
+      const im = new Image();
+      im.onload = () => res(im);
+      im.onerror = rej;
+      im.src = src;
+    });
+
+  function wrapText(ctx, text, x, y, maxW, lh, maxLines = 3) {
+    let line = "", lines = [];
+    for (const ch of text) {
+      if (ctx.measureText(line + ch).width > maxW && line) { lines.push(line); line = ch; }
+      else line += ch;
+    }
+    if (line) lines.push(line);
+    if (lines.length > maxLines) { lines = lines.slice(0, maxLines); lines[maxLines - 1] = lines[maxLines - 1].slice(0, -1) + "…"; }
+    lines.forEach((l, i) => ctx.fillText(l, x, y + i * lh));
+    return y + lines.length * lh;
+  }
+
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  async function drawShareCard(R) {
+    const W = 1080, H = 1440;
+    const cv = document.createElement("canvas");
+    cv.width = W; cv.height = H;
+    const ctx = cv.getContext("2d");
+    const { best } = R;
+    const color = CLASS_COLORS[best.cls.name];
+    const t = TYPES[R.type];
+    const serif = '"Noto Serif TC", "Songti TC", "PingFang TC", serif';
+    const display = '"Cinzel", "Noto Serif TC", serif';
+    try { await document.fonts.ready; } catch (e) {}
+
+    // 背景
+    ctx.fillStyle = "#0e0b14"; ctx.fillRect(0, 0, W, H);
+    let g = ctx.createRadialGradient(W / 2, 330, 40, W / 2, 330, 640);
+    g.addColorStop(0, color + "55"); g.addColorStop(1, "#0e0b1400");
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    g = ctx.createRadialGradient(W, H, 0, W, H, 700);
+    g.addColorStop(0, "#2a160fcc"); g.addColorStop(1, "#2a160f00");
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    ctx.strokeStyle = "#e6b35a66"; ctx.lineWidth = 3;
+    roundRect(ctx, 30, 30, W - 60, H - 60, 28); ctx.stroke();
+    ctx.strokeStyle = "#e6b35a22"; ctx.lineWidth = 1;
+    roundRect(ctx, 44, 44, W - 88, H - 88, 22); ctx.stroke();
+
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#e6b35a";
+    ctx.font = `600 30px ${serif}`;
+    ctx.fillText("永恆服MBTI選角測試", W / 2, 118);
+    ctx.fillStyle = "#a99c88";
+    ctx.font = `400 28px ${serif}`;
+    ctx.fillText("我的命定角色是", W / 2, 168);
+
+    // 種族頭像
+    const S = 250, gap = 90, y0 = 210;
+    const xL = W / 2 - gap / 2 - S, xR = W / 2 + gap / 2;
     try {
-      if (navigator.share) {
-        await navigator.share({ title: "永恆服MBTI選角測試", text, url });
-        return;
-      }
-      await navigator.clipboard.writeText(`${text}\n${url}`);
-      $("toast").textContent = "已複製結果連結，貼給公會朋友吧！";
+      const portrait = await loadImg(`assets/races/${best.race.key}.jpg`);
+      ctx.save(); roundRect(ctx, xL, y0, S, S, 22); ctx.clip();
+      ctx.drawImage(portrait, xL, y0, S, S); ctx.restore();
+    } catch (e) {}
+    ctx.strokeStyle = "#c9a35a"; ctx.lineWidth = 8;
+    roundRect(ctx, xL, y0, S, S, 22); ctx.stroke();
+    ctx.strokeStyle = best.race.faction === "部落" ? "#c53a2c" : best.race.faction === "聯盟" ? "#3f6fd8" : "#a98be0";
+    ctx.lineWidth = 4;
+    roundRect(ctx, xL - 9, y0 - 9, S + 18, S + 18, 28); ctx.stroke();
+
+    // 職業圖示
+    ctx.fillStyle = "#00000066";
+    ctx.beginPath(); ctx.arc(xR + S / 2, y0 + S / 2, S / 2, 0, Math.PI * 2); ctx.fill();
+    try {
+      const icon = await loadImg(`assets/classes/${ICONS.clsKey(best.cls.name)}.png`);
+      ctx.save(); ctx.beginPath(); ctx.arc(xR + S / 2, y0 + S / 2, S / 2 - 4, 0, Math.PI * 2); ctx.clip();
+      ctx.drawImage(icon, xR + 4, y0 + 4, S - 8, S - 8); ctx.restore();
     } catch (e) {
-      $("toast").textContent = url;
+      try {
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 64 64" fill="none" stroke="${color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">${ICONS.clsRaw(best.cls.name)}</svg>`;
+        const icon = await loadImg("data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg));
+        ctx.drawImage(icon, xR + 45, y0 + 45, S - 90, S - 90);
+      } catch (e2) {}
+    }
+    ctx.beginPath(); ctx.arc(xR + S / 2, y0 + S / 2, S / 2, 0, Math.PI * 2);
+    ctx.strokeStyle = "#c9a35a"; ctx.lineWidth = 8; ctx.stroke();
+    ctx.beginPath(); ctx.arc(xR + S / 2, y0 + S / 2, S / 2 + 9, 0, Math.PI * 2);
+    ctx.strokeStyle = color; ctx.lineWidth = 4; ctx.stroke();
+    ctx.fillStyle = "#a99c88"; ctx.font = `400 46px ${serif}`;
+    ctx.fillText("＋", W / 2, y0 + S / 2 + 16);
+
+    // 組合名稱
+    ctx.font = `900 92px ${serif}`;
+    const rw = ctx.measureText(best.race.name).width, cw = ctx.measureText(best.cls.name).width;
+    const sx = W / 2 - (rw + cw) / 2;
+    ctx.textAlign = "left";
+    ctx.fillStyle = "#ece4d6"; ctx.fillText(best.race.name, sx, 600);
+    ctx.fillStyle = color; ctx.fillText(best.cls.name, sx + rw, 600);
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#a99c88"; ctx.font = `400 30px ${serif}`;
+    ctx.fillText(`${best.race.faction}・${best.cls.role}${isNewCombo(best) ? "・★ 永恆服新組合" : ""}`, W / 2, 652);
+
+    // MBTI
+    ctx.fillStyle = "#e6b35a"; ctx.font = `800 76px ${display}`;
+    ctx.fillText(R.type, W / 2, 762);
+    ctx.fillStyle = "#f3d9a1"; ctx.font = `600 36px ${serif}`;
+    ctx.fillText(t.nick, W / 2, 814);
+    if (R.shadow) {
+      ctx.fillStyle = "#a99c88"; ctx.font = `400 26px ${serif}`;
+      ctx.fillText(`也有 ${R.shadow.type} 的影子`, W / 2, 856);
+    }
+
+    // 四維長條
+    let by = 900;
+    ctx.font = `600 26px ${serif}`;
+    R.strength.forEach(({ a, b, v, lead }) => {
+      const bx = 230, bw = W - 460;
+      ctx.textAlign = "right"; ctx.fillStyle = lead === a ? color : "#a99c88";
+      ctx.fillText(`${a} ${v}%`, bx - 20, by + 14);
+      ctx.textAlign = "left"; ctx.fillStyle = lead === b ? color : "#a99c88";
+      ctx.fillText(`${100 - v}% ${b}`, bx + bw + 20, by + 14);
+      ctx.fillStyle = "#ffffff18"; roundRect(ctx, bx, by, bw, 14, 7); ctx.fill();
+      ctx.fillStyle = color;
+      if (lead === a) roundRect(ctx, bx, by, (bw * v) / 100, 14, 7);
+      else roundRect(ctx, bx + (bw * v) / 100, by, (bw * (100 - v)) / 100, 14, 7);
+      ctx.fill();
+      by += 48;
+    });
+
+    // 一句話理由
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#ece4d6"; ctx.font = `400 30px ${serif}`;
+    const line1 = (R.raceWhy[0] && R.raceWhy[0].line) || best.race.blurb;
+    const line2 = (R.clsWhy[0] && R.clsWhy[0].line) || best.cls.blurb;
+    const ty = wrapText(ctx, line1, W / 2, by + 36, W - 220, 44, 2);
+    wrapText(ctx, line2, W / 2, ty + 8, W - 220, 44, 2);
+
+    // 底部宣傳
+    const fy = H - 196;
+    ctx.strokeStyle = "#e6b35a55"; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(120, fy); ctx.lineTo(W - 120, fy); ctx.stroke();
+    ctx.fillStyle = "#f3d9a1"; ctx.font = `700 34px ${serif}`;
+    ctx.fillText("你是哪個種族職業？20 題測出你的永恆服選角", W / 2, fy + 58);
+    ctx.fillStyle = "#e6b35a"; ctx.font = `600 28px ${serif}`;
+    ctx.fillText(SITE_URL.replace(/^https?:\/\//, "").replace(/\/$/, ""), W / 2, fy + 104);
+    ctx.fillStyle = "#7f7466"; ctx.font = `400 22px ${serif}`;
+    ctx.fillText(`by ${AUTHOR}・${AUTHOR_LINK}・非官方粉絲作品`, W / 2, fy + 144);
+
+    return cv;
+  }
+
+  let shareBlob = null;
+  async function openShare() {
+    if (!current) return;
+    $("shareModal").classList.add("open");
+    $("shareToast").textContent = "";
+    $("sharePreview").innerHTML = `<p class="muted">產生圖片中…</p>`;
+    try {
+      const cv = await drawShareCard(current);
+      const url = cv.toDataURL("image/jpeg", 0.92);
+      shareBlob = await new Promise((res) => cv.toBlob(res, "image/jpeg", 0.92));
+      $("sharePreview").innerHTML = `<img src="${url}" alt="我的永恆服選角結果圖">`;
+      $("downloadBtn").href = url;
+      $("downloadBtn").download = `永恆服選角_${current.type}_${comboName(current.best)}.jpg`;
+    } catch (e) {
+      $("sharePreview").innerHTML = `<p class="muted">圖片產生失敗，請改用複製連結。</p>`;
+    }
+  }
+
+  const shareText = () =>
+    current ? `我在永恆服MBTI選角測試是 ${current.type}「${TYPES[current.type].nick}」，命定角色是 ${comboName(current.best)}！你呢？` : "永恆服MBTI選角測試";
+
+  async function nativeShare() {
+    const url = location.href;
+    try {
+      if (shareBlob && navigator.canShare) {
+        const file = new File([shareBlob], "result.jpg", { type: "image/jpeg" });
+        if (navigator.canShare({ files: [file] })) {
+          await navigator.share({ files: [file], title: "永恆服MBTI選角測試", text: `${shareText()}\n${url}` });
+          return;
+        }
+      }
+      if (navigator.share) { await navigator.share({ title: "永恆服MBTI選角測試", text: shareText(), url }); return; }
+      await copyLink();
+    } catch (e) {}
+  }
+
+  async function copyLink() {
+    const msg = `${shareText()}\n${location.href}`;
+    try {
+      await navigator.clipboard.writeText(msg);
+      $("toast").textContent = $("shareToast").textContent = "已複製結果連結，貼給公會朋友吧！";
+    } catch (e) {
+      $("toast").textContent = $("shareToast").textContent = location.href;
     }
   }
 
   function reset() {
     answers.fill(null);
     idx = 0;
+    current = null;
     history.replaceState(null, "", location.pathname);
     renderQuestion();
     show("quiz");
   }
 
-  /* ---------- 事件 ---------- */
+  /* ================= 事件 ================= */
   buildSteps();
   $("introBanner").innerHTML = SCENES.render("mountain");
   $("startBtn").addEventListener("click", reset);
   $("retryBtn").addEventListener("click", reset);
   $("galleryBtn").addEventListener("click", renderGallery);
   $("galleryBtn2").addEventListener("click", renderGallery);
-  $("galleryBack").addEventListener("click", () => {
-    const t = new URLSearchParams(location.search).get("type");
-    t && RESULTS[t] ? show("result") : show("intro");
-  });
-  $("shareBtn").addEventListener("click", share);
-  $("backBtn").addEventListener("click", () => {
-    if (idx > 0) { idx--; renderQuestion(); }
-  });
+  $("galleryBack").addEventListener("click", () => (current ? show("result") : show("intro")));
+  $("shareBtn").addEventListener("click", openShare);
+  $("copyBtn").addEventListener("click", copyLink);
+  $("nativeShareBtn").addEventListener("click", nativeShare);
+  $("closeShare").addEventListener("click", () => $("shareModal").classList.remove("open"));
+  $("shareModal").addEventListener("click", (e) => { if (e.target.id === "shareModal") $("shareModal").classList.remove("open"); });
+  $("backBtn").addEventListener("click", () => { if (idx > 0) { idx--; renderQuestion(); } });
 
   // 從分享連結直接打開結果
   const qs = new URLSearchParams(location.search);
-  const t = (qs.get("type") || "").toUpperCase();
-  if (RESULTS[t]) {
-    let pct = null;
-    const p = (qs.get("p") || "").split("-").map(Number);
-    if (p.length === 4 && p.every((n) => n >= 0 && n <= 100)) {
-      pct = {};
-      ["E", "S", "T", "J"].forEach((k, i) => (pct[k] = p[i]));
-      pct.I = 100 - pct.E; pct.N = 100 - pct.S; pct.F = 100 - pct.T; pct.P = 100 - pct.J;
-    }
-    renderResult(t, pct);
+  const p = (qs.get("p") || "").split("-").map(Number);
+  const t = (qs.get("t") || qs.get("type") || "").toUpperCase();
+  if (p.length === 4 && p.every((n) => Number.isFinite(n) && n >= 0 && n <= 100)) {
+    const pct = {};
+    ["E", "S", "T", "J"].forEach((k, i) => (pct[k] = p[i] === 50 ? 51 : p[i]));
+    renderResult(analyze(pct));
+  } else if (TYPES[t]) {
+    renderResult(analyze(idealPct(t)));
   }
 })();

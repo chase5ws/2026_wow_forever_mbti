@@ -23,17 +23,30 @@ const ICONS = (() => {
     "獸人": `<path d="M18 56 L44 8"/><path d="M38 10 C52 8 58 22 52 34 C46 28 40 27 32 24 Z"/><path d="M30 20 C22 14 12 16 10 26 C18 26 24 28 28 30"/>`,
     "不死族": `<path d="M16 30 C16 18 24 10 32 10 C40 10 48 18 48 30 C48 36 44 38 44 42 V48 H20 V42 C20 38 16 36 16 30Z"/><circle cx="25" cy="30" r="4"/><circle cx="39" cy="30" r="4"/><path d="M32 36 V40 M26 48 V54 M32 48 V54 M38 48 V54"/>`,
     "牛頭人": `<path d="M22 26 C22 44 26 54 32 54 C38 54 42 44 42 26 Z"/><path d="M22 28 C12 26 8 18 10 8 C14 16 18 20 24 22 M42 28 C52 26 56 18 54 8 C50 16 46 20 40 22"/><circle cx="32" cy="48" r="3"/><path d="M27 34 H28 M36 34 H37"/>`,
+    "天裔精靈": `<path d="M32 8 L38 26 L56 22 L42 34 L50 54 L32 42 L14 54 L22 34 L8 22 L26 26 Z"/>`,
     "食人妖": `<path d="M18 10 H46 V40 C46 48 40 54 32 54 C24 54 18 48 18 40Z"/><path d="M24 24 L30 27 M40 24 L34 27 M28 38 H36"/><path d="M24 44 C22 50 18 54 12 56 M40 44 C42 50 46 54 52 56"/><path d="M18 18 H10 M46 18 H54"/>`
   };
 
   // 種族頭像（截自遊戲角色選擇畫面），讀取失敗時退回線條圖示
   const portrait = {
     "人類": "human", "矮人": "dwarf", "夜精靈": "nightelf", "地精": "gnome",
-    "獸人": "orc", "不死族": "undead", "牛頭人": "tauren", "食人妖": "troll"
+    "天裔精靈": "skyborne", "獸人": "orc", "不死族": "undead", "牛頭人": "tauren", "食人妖": "troll"
+  };
+
+  // 職業圖示（使用者提供的遊戲風格圖示），讀取失敗時退回線條圖示
+  const clsKey = {
+    "戰士": "warrior", "聖騎士": "paladin", "獵人": "hunter", "盜賊": "rogue", "牧師": "priest",
+    "薩滿": "shaman", "法師": "mage", "術士": "warlock", "德魯伊": "druid"
   };
 
   return {
-    cls: (name) => svg(cls[name] || ""),
+    clsRaw: (name) => cls[name] || "",
+    clsKey: (name) => clsKey[name],
+    clsSvg: (name) => svg(cls[name] || ""),
+    cls: (name) =>
+      clsKey[name]
+        ? `<img class="portrait class-img" src="assets/classes/${clsKey[name]}.png" alt="${name}" loading="lazy" onerror="this.outerHTML=ICONS.clsSvg('${name}')">`
+        : svg(cls[name] || ""),
     raceSvg: (name) => svg(race[name] || ""),
     race: (name) =>
       portrait[name]
