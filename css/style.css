@@ -401,3 +401,15 @@ img.author-avatar { width: 56px; height: 56px; padding: 0; object-fit: cover; ba
 .intro-banner img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .intro-banner::after { content: ""; position: absolute; inset: auto 0 0 0; height: 30%; background: linear-gradient(transparent, #221a2c); pointer-events: none; }
 .fan-tag { position: absolute; top: 10px; right: 10px; z-index: 1; font-size: 11px; padding: 2px 8px; border-radius: 99px; background: #000a; color: var(--gold-soft); border: 1px solid #e6b35a66; }
+
+/* ---------- 首頁縮小（約 80%） ---------- */
+#intro { max-width: 580px; margin: 0 auto; }
+#intro .intro-panel { padding: 20px 22px 22px; }
+#intro .eyebrow { font-size: 11px; margin-bottom: 4px; }
+#intro h1 { font-size: clamp(30px, 7vw, 40px); margin-bottom: 10px; }
+#intro .lead { font-size: 15px; line-height: 1.6; margin-bottom: 14px; }
+#intro .intro-meta { margin-bottom: 14px; gap: 8px; }
+#intro .intro-meta li { font-size: 13px; padding: 3px 12px; }
+#intro .hint { margin: 0 0 4px; font-size: 12px; }
+#intro .btn { padding: 12px 16px; font-size: 15px; margin-top: 8px; }
+#intro .about { padding: 16px 18px; }
