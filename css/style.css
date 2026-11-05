@@ -440,3 +440,20 @@ img.author-avatar { width: 56px; height: 56px; padding: 0; object-fit: cover; ba
 .opt.opt-poop { border-style: dashed; border-color: #8b5a2b; background: #2a1d1480; }
 .opt.opt-poop .key { color: #e8b77d; border-color: #8b5a2b; }
 .opt.opt-poop:hover { background: #8b5a2b33; border-color: #e8b77d; }
+
+/* ---------- IMSB 獨立結果頁 ---------- */
+.imsb-hero { background: radial-gradient(500px 240px at 50% 0%, #8b5a2b66, transparent 70%), #21170f; }
+.imsb-hero .eyebrow { color: #e8b77d; }
+.imsb-hero .poop { margin: 6px 0 4px; }
+.imsb-type { color: #e8b77d !important; font: 800 64px/1 var(--display) !important; letter-spacing: .12em; margin: 4px 0 0; text-shadow: 0 0 30px #8b5a2b; }
+.imsb-hero .imsb-nick { margin: 10px 0 2px; font-size: 20px; }
+.imsb-alias { margin: 0 0 14px; font-size: 13px; color: var(--muted); }
+.imsb-emblem { color: #b07a45; }
+.imsb-emblem .ring { background: radial-gradient(circle at 50% 35%, #8b5a2b55, #00000066); border: 3px dashed #b07a45; }
+.imsb-emblem .emoji { font-size: 52px; line-height: 1; }
+.imsb-mini { font-size: 24px; color: #b07a45; }
+.imsb-voices .v3 { justify-self: center; background: #8b5a2b; color: #fff6e3; border-radius: 14px; }
+.r-body .imsb-voices { margin: 0 0 4px; max-width: none; }
+.r-body .imsb-list { margin: 0; max-width: none; }
+.imsb-hero ~ .r-body .why-lines .pole { background: transparent; font-size: 16px; }
+.imsb-hero ~ .r-body .imsb-note { margin-top: 18px; text-align: center; }

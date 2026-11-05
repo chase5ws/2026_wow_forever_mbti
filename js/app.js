@@ -207,39 +207,94 @@
     };
   }
 
-  // IMSB 隱藏人格：改答案 5 次以上，或四個維度中有 3 個幾乎各半
-  const isImsb = (R) => changes >= 5 || R.strength.filter((x) => x.lv < 60).length >= 3;
-
-  function imsbHTML() {
-    return `
-      <div class="imsb">
+  /* ================= IMSB 隱藏人格（獨立結果頁） ================= */
+  function renderImsb() {
+    current = { imsb: true, type: "IMSB" };
+    const I = IMSB;
+    const card = $("resultCard");
+    card.style.setProperty("--c", I.color);
+    card.innerHTML = `
+      <div class="r-hero imsb-hero">
+        <p class="eyebrow">隱藏人格解鎖</p>
         <div class="poop" aria-hidden="true">💩</div>
-        <p class="imsb-tag">隱藏人格解鎖</p>
-        <h2>IMSB</h2>
-        <p class="imsb-nick">「傻者」・自我攻擊者</p>
-        <div class="imsb-voices">
-          <p class="v1">我衝了！</p>
-          <p class="v2">人家憑什麼看得上你？你去了就是自取其辱！</p>
+        <p class="r-type imsb-type">${I.type}</p>
+        <p class="imsb-nick">${I.nick}</p>
+        <p class="imsb-alias">又稱 ${I.alias}</p>
+        <div class="emblems">
+          <figure class="emblem imsb-emblem">
+            <div class="ring"><span class="emoji">${I.raceEmoji}</span></div>
+            <figcaption><small>種族</small>${I.race}</figcaption>
+          </figure>
+          <span class="plus">＋</span>
+          <figure class="emblem imsb-emblem">
+            <div class="ring"><span class="emoji">${I.clsEmoji}</span></div>
+            <figcaption><small>職業</small>${I.cls}</figcaption>
+          </figure>
         </div>
-        <p class="imsb-desc">你的大腦裡隨時住著兩個極端的聲音，最後往往站在原地，默默看著對方離開。</p>
+        <p class="r-combo">${I.race}<span class="cls">${I.cls}</span></p>
+        <div class="badges">
+          <span class="badge">${I.faction}</span>
+          <span class="badge">${I.role}</span>
+          <span class="badge new">★ 隱藏人格</span>
+        </div>
+      </div>
+      <div class="r-body">
+        <h3>你的內心戲</h3>
+        <div class="imsb-voices">
+          <p class="v1">${I.voices[0]}</p>
+          <p class="v2">${I.voices[1]}</p>
+          <p class="v3">（最後：做了一件大便事 💩）</p>
+        </div>
+
+        <h3>${I.type}・${I.nick}</h3>
+        <p>${I.desc}</p>
+
+        <h3>為什麼是${I.race}？</h3>
+        <div class="why-row">
+          <span class="why-icon imsb-mini">${I.raceEmoji}</span>
+          <div><ul class="why-lines">${I.whyRace.map((x) => `<li><span class="pole">💩</span>${x}</li>`).join("")}</ul></div>
+        </div>
+        <h3>為什麼是${I.cls}？</h3>
+        <div class="why-row">
+          <span class="why-icon imsb-mini">${I.clsEmoji}</span>
+          <div><ul class="why-lines">${I.whyCls.map((x) => `<li><span class="pole">💩</span>${x}</li>`).join("")}</ul></div>
+        </div>
+
+        <h3>人格指數</h3>
+        <div class="dims">${I.meters.map((m) => `
+          <div class="dim-row">
+            <div class="dim-labels"><span class="win"><b>${m.name}</b></span><span class="win">${m.v}%</span></div>
+            <div class="dim-bar"><i style="left:0;width:${m.v}%"></i></div>
+          </div>`).join("")}
+        </div>
+
+        <h3>招牌大便行為</h3>
         <ul class="imsb-list">
           ${poopRoute ? `<li><b>開服第一件事，是蹲在北郡修道院撿大便</b></li>` : ""}
-          <li>在創角畫面待了兩小時，職業選了又刪、刪了又選</li>
-          <li>看到「徵坦補，缺你一個」，私訊打好又刪掉，最後看著隊伍滿員出發</li>
-          <li>站在副本門口，默默看著隊友一個一個走進去</li>
-          ${poopRoute ? "" : `<li>這份測驗的答案，你也改了好幾次 ${changes >= 5 ? `（${changes} 次）` : ""}</li>`}
+          ${I.habits.map((h) => `<li>${h}</li>`).join("")}
         </ul>
-        <p class="imsb-note">IMSB 出自網路爆紅的惡搞人格測試 SBTI（Bilibili 博主「蛆肉兒串兒」推出），純屬迷因娛樂，毫無科學根據。<br>別想了，下面就是你的正式選角，直接衝 ↓</p>
+
+        <h3>小提醒</h3>
+        <p class="muted">💡 ${I.watch}</p>
+
+        <h3>冒險資料</h3>
+        <div class="info-grid">
+          <div class="info"><small>起始地</small>${I.zone}</div>
+          <div class="info"><small>職業定位</small>${I.role}</div>
+          <div class="info"><small>最佳隊友</small>${I.partner}</div>
+          <div class="info"><small>天敵</small>${I.enemy}</div>
+        </div>
+        <p class="imsb-note">${I.source}</p>
       </div>`;
+    $("toast").textContent = "";
+    show("result");
   }
 
   function finish() {
     window.STATS && STATS.hit("completes");
     const pct = scorePct();
-    const R = analyze(pct);
-    R.imsb = isImsb(R);
-    history.replaceState(null, "", `?p=${["E", "S", "T", "J"].map((k) => pct[k]).join("-")}${R.imsb ? "&s=1" : ""}`);
-    renderResult(R);
+    history.replaceState(null, "", `?p=${["E", "S", "T", "J"].map((k) => pct[k]).join("-")}`);
+    renderResult(analyze(pct));
   }
 
   const comboName = (c) => c.race.name + c.cls.name;
@@ -302,7 +357,7 @@
 
     const card = $("resultCard");
     card.style.setProperty("--c", color);
-    card.innerHTML = `${R.imsb ? imsbHTML() : ""}
+    card.innerHTML = `
       <div class="r-hero">
         <p class="eyebrow">你的永恆服選角</p>
         <div class="emblems">
@@ -381,11 +436,7 @@
 
   function openType(type) {
     history.replaceState(null, "", `?t=${type}`);
-    if (type === "IMSB") {
-      const R = analyze({ E: 52, S: 48, T: 52, J: 48 });
-      R.imsb = true;
-      return renderResult(R);
-    }
+    if (type === "IMSB") return renderImsb();
     renderResult(analyze(idealPct(type)));
   }
 
@@ -459,7 +510,73 @@
     ctx.closePath();
   }
 
+  async function drawImsbCard() {
+    const W = 1080, H = 1440, I = IMSB;
+    const cv = document.createElement("canvas");
+    cv.width = W; cv.height = H;
+    const ctx = cv.getContext("2d");
+    const serif = '"Noto Serif TC", "Songti TC", "PingFang TC", serif';
+    const display = '"Cinzel", "Noto Serif TC", serif';
+    const emoji = '"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
+    try { await document.fonts.ready; } catch (e) {}
+
+    ctx.fillStyle = "#17110c"; ctx.fillRect(0, 0, W, H);
+    let g = ctx.createRadialGradient(W / 2, 330, 40, W / 2, 330, 640);
+    g.addColorStop(0, "#8b5a2b88"); g.addColorStop(1, "#17110c00");
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    ctx.strokeStyle = "#b07a4588"; ctx.lineWidth = 3; ctx.setLineDash([18, 12]);
+    roundRect(ctx, 30, 30, W - 60, H - 60, 28); ctx.stroke(); ctx.setLineDash([]);
+
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#e8b77d"; ctx.font = `600 30px ${serif}`;
+    ctx.fillText("永恆服MBTI選角測試・隱藏人格解鎖", W / 2, 118);
+
+    ctx.font = `220px ${emoji}`;
+    ctx.fillText("💩", W / 2, 400);
+
+    ctx.fillStyle = "#e8b77d"; ctx.font = `800 110px ${display}`;
+    ctx.fillText(I.type, W / 2, 560);
+    ctx.fillStyle = "#f3d9a1"; ctx.font = `700 44px ${serif}`;
+    ctx.fillText(I.nick, W / 2, 630);
+
+    ctx.font = `900 76px ${serif}`;
+    const rw = ctx.measureText(I.race).width, cw = ctx.measureText(I.cls).width;
+    const sx = W / 2 - (rw + cw) / 2;
+    ctx.textAlign = "left";
+    ctx.fillStyle = "#ece4d6"; ctx.fillText(I.race, sx, 740);
+    ctx.fillStyle = I.color; ctx.fillText(I.cls, sx + rw, 740);
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#a99c88"; ctx.font = `400 28px ${serif}`;
+    ctx.fillText(`${I.faction}・${I.role}`, W / 2, 790);
+
+    let by = 850;
+    I.meters.forEach((m) => {
+      const bx = 330, bw = W - 560;
+      ctx.textAlign = "right"; ctx.fillStyle = "#e8b77d"; ctx.font = `600 28px ${serif}`;
+      ctx.fillText(m.name, bx - 24, by + 16);
+      ctx.textAlign = "left"; ctx.fillText(`${m.v}%`, bx + bw + 20, by + 16);
+      ctx.fillStyle = "#ffffff18"; roundRect(ctx, bx, by, bw, 16, 8); ctx.fill();
+      ctx.fillStyle = I.color; roundRect(ctx, bx, by, Math.max(16, (bw * m.v) / 100), 16, 8); ctx.fill();
+      by += 54;
+    });
+
+    ctx.textAlign = "center"; ctx.fillStyle = "#ece4d6"; ctx.font = `400 30px ${serif}`;
+    wrapText(ctx, `「${I.voices[0]}」「${I.voices[1]}」最後，做了一件大便事。`, W / 2, by + 40, W - 220, 46, 3);
+
+    const fy = H - 196;
+    ctx.strokeStyle = "#b07a4566"; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(120, fy); ctx.lineTo(W - 120, fy); ctx.stroke();
+    ctx.fillStyle = "#f3d9a1"; ctx.font = `700 34px ${serif}`;
+    ctx.fillText("你是哪個種族職業？還是你也是 💩？", W / 2, fy + 58);
+    ctx.fillStyle = "#e6b35a"; ctx.font = `600 28px ${serif}`;
+    ctx.fillText(SITE_URL.replace(/^https?:\/\//, "").replace(/\/$/, ""), W / 2, fy + 104);
+    ctx.fillStyle = "#7f7466"; ctx.font = `400 22px ${serif}`;
+    ctx.fillText(`開發者 ${AUTHOR}・${AUTHOR_LINK}・迷因娛樂，非官方粉絲作品`, W / 2, fy + 144);
+    return cv;
+  }
+
   async function drawShareCard(R) {
+    if (R.imsb) return drawImsbCard();
     const W = 1080, H = 1440;
     const cv = document.createElement("canvas");
     cv.width = W; cv.height = H;
@@ -538,16 +655,6 @@
     ctx.fillStyle = "#a99c88"; ctx.font = `400 30px ${serif}`;
     ctx.fillText(`${best.race.faction}・${best.cls.role}${isNewCombo(best) ? "・★ 永恆服新組合" : ""}`, W / 2, 652);
 
-    // IMSB 彩蛋
-    if (R.imsb) {
-      ctx.save(); ctx.translate(W - 150, 150); ctx.rotate(0.18);
-      ctx.font = `110px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;
-      ctx.fillText("💩", 0, 30);
-      ctx.fillStyle = "#f3d9a1"; ctx.font = `800 30px ${display}`;
-      ctx.fillText("IMSB", 0, 90);
-      ctx.restore();
-    }
-
     // MBTI
     ctx.fillStyle = "#e6b35a"; ctx.font = `800 76px ${display}`;
     ctx.fillText(R.type, W / 2, 762);
@@ -609,13 +716,14 @@
       shareBlob = await new Promise((res) => cv.toBlob(res, "image/jpeg", 0.92));
       $("sharePreview").innerHTML = `<img src="${url}" alt="我的永恆服選角結果圖">`;
       $("downloadBtn").href = url;
-      $("downloadBtn").download = `永恆服選角_${current.type}_${comboName(current.best)}.jpg`;
+      $("downloadBtn").download = current.imsb ? "永恆服選角_IMSB_大便人糞術士.jpg" : `永恆服選角_${current.type}_${comboName(current.best)}.jpg`;
     } catch (e) {
       $("sharePreview").innerHTML = `<p class="muted">圖片產生失敗，請改用複製連結。</p>`;
     }
   }
 
   const shareText = () =>
+    current && current.imsb ? `我在永恆服MBTI選角測試解鎖了隱藏人格 IMSB「${IMSB.nick}」：${IMSB.race}${IMSB.cls} 💩 你敢測嗎？` :
     current ? `我在永恆服MBTI選角測試是 ${current.type}「${TYPES[current.type].nick}」，命定角色是 ${comboName(current.best)}！你呢？` : "永恆服MBTI選角測試";
 
   async function nativeShare() {
@@ -681,9 +789,7 @@
   if (p.length === 4 && p.every((n) => Number.isFinite(n) && n >= 0 && n <= 100)) {
     const pct = {};
     ["E", "S", "T", "J"].forEach((k, i) => (pct[k] = p[i] === 50 ? 51 : p[i]));
-    const R = analyze(pct);
-    R.imsb = qs.get("s") === "1" || isImsb(R);
-    renderResult(R);
+    renderResult(analyze(pct));
   } else if (t === "IMSB") {
     openType("IMSB");
   } else if (TYPES[t]) {
