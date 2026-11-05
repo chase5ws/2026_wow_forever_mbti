@@ -36,12 +36,19 @@
     <!-- 測驗 -->
     <section id="quiz" class="screen">
       <div class="progress">
-        <button class="back" id="backBtn" aria-label="上一題">‹</button>
-        <div class="bar"><i id="barFill"></i></div>
-        <span id="counter">1 / 20</span>
+        <div class="progress-top">
+          <button class="back" id="backBtn" aria-label="上一題">‹</button>
+          <div class="progress-text">
+            <p id="counter" class="counter"></p>
+            <p id="remain" class="remain"></p>
+          </div>
+          <span class="dim-tag" id="dimTag"></span>
+        </div>
+        <div class="steps" id="steps" aria-label="作答進度"></div>
       </div>
       <article class="panel q-card" id="qCard">
         <div class="scene" id="scene"></div>
+        <span class="scene-no" id="sceneNo"></span>
         <div class="q-body">
           <p class="place" id="place"></p>
           <h2 id="qTitle"></h2>
@@ -79,6 +86,7 @@
   </footer>
   <script src="js/data.js"></script>
   <script src="js/scenes.js"></script>
+  <script src="js/icons.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>
