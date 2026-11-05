@@ -243,10 +243,10 @@
     const url = location.href;
     const t = new URLSearchParams(location.search).get("type");
     const r = RESULTS[t];
-    const text = r ? `我在永恆服選角測驗是 ${t}「${r.nick}」：${r.race}${r.cls}！你呢？` : "永恆服選角測驗";
+    const text = r ? `我在永恆服MBTI選角測試是 ${t}「${r.nick}」：${r.race}${r.cls}！你呢？` : "永恆服MBTI選角測試";
     try {
       if (navigator.share) {
-        await navigator.share({ title: "永恆服選角測驗", text, url });
+        await navigator.share({ title: "永恆服MBTI選角測試", text, url });
         return;
       }
       await navigator.clipboard.writeText(`${text}\n${url}`);

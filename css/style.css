@@ -242,3 +242,26 @@ footer { max-width: 720px; margin: 0 auto; padding: 0 16px 28px; text-align: cen
   .r-body { padding: 26px 30px 30px; }
 }
 @media (prefers-reduced-motion: reduce) { .screen { animation: none; } * { transition: none !important; } }
+
+/* ---------- 作者 ---------- */
+.author {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  padding: 16px; margin-bottom: 14px; text-align: left;
+  border: 1px solid var(--panel-edge); border-radius: var(--radius);
+  background: linear-gradient(180deg, #221a2c, var(--panel));
+}
+.author-avatar {
+  flex: none; width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center;
+  font: 800 22px var(--display); color: var(--bg); background: linear-gradient(180deg, var(--gold-soft), var(--gold));
+}
+.author-info { flex: 1; min-width: 140px; line-height: 1.4; }
+.author-info small { display: block; font-size: 11px; letter-spacing: .2em; color: var(--muted); }
+.author-info b { display: block; font-size: 17px; color: var(--text); }
+.author-info span { font-size: 13px; color: var(--muted); }
+.author-links { display: flex; gap: 8px; flex-wrap: wrap; }
+.author-links a {
+  font-size: 13px; padding: 5px 12px; border-radius: 99px; text-decoration: none;
+  color: var(--gold-soft); border: 1px solid #e6b35a55; transition: background .2s;
+}
+.author-links a:hover { background: #e6b35a1f; }
+.disclaimer { margin: 0; line-height: 1.6; }
