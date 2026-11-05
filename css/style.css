@@ -265,3 +265,15 @@ footer { max-width: 720px; margin: 0 auto; padding: 0 16px 28px; text-align: cen
 }
 .author-links a:hover { background: #e6b35a1f; }
 .disclaimer { margin: 0; line-height: 1.6; }
+
+/* ---------- 種族頭像 ---------- */
+img.portrait { display: block; width: 100%; height: 100%; object-fit: cover; }
+.emblem.race .ring {
+  border-radius: 12px; overflow: hidden; padding: 0;
+  border: 3px solid #c9a35a; box-shadow: 0 0 0 2px #3a2a14, 0 0 0 4px currentColor, 0 0 24px -2px currentColor;
+}
+.why-icon { overflow: hidden; }
+.why-icon img.portrait { border-radius: 50%; }
+.cell-icons { display: flex; gap: 6px; align-items: center; }
+.cell .cp { width: 30px; height: 30px; border-radius: 6px; overflow: hidden; border: 1px solid #c9a35a; flex: none; }
+.cell .cp.alliance { box-shadow: 0 0 0 1px #3f6fd8; } .cell .cp.horde { box-shadow: 0 0 0 1px #c53a2c; }

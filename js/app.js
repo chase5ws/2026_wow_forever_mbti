@@ -161,7 +161,7 @@
         <p class="r-type">${type}</p>
         <p class="r-nick">${r.nick}</p>
         <div class="emblems">
-          <figure class="emblem ${fClass}">
+          <figure class="emblem race ${fClass}">
             <div class="ring">${ICONS.race(r.race)}</div>
             <figcaption><small>種族</small>${r.race}</figcaption>
           </figure>
@@ -203,7 +203,7 @@
         </div>
         <h3>最佳隊友</h3>
         <button class="partner" data-type="${r.partner}">
-          <span class="why-icon" style="color:${CLASS_COLORS[p.cls]}">${ICONS.cls(p.cls)}</span>
+          <span class="why-icon ${p.faction === "聯盟" ? "alliance" : "horde"}">${ICONS.race(p.race)}</span>
           <span class="pt" style="color:${CLASS_COLORS[p.cls]}">${r.partner}</span>
           <span>${p.race}${p.cls}<br><small style="color:var(--muted)">${p.nick}</small></span>
         </button>
@@ -225,7 +225,7 @@
         const f = r.faction === "聯盟" ? "alliance" : "horde";
         const isNew = NEW_COMBOS.includes(r.race + r.cls) ? " ★" : "";
         return `<button class="cell" data-type="${t}" style="--c:${CLASS_COLORS[r.cls]}">
-          <div class="cell-top"><span class="ct">${t}</span><span class="ci">${ICONS.cls(r.cls)}</span></div>
+          <div class="cell-top"><span class="ct">${t}</span><span class="cell-icons"><span class="cp ${f}">${ICONS.race(r.race)}</span><span class="ci">${ICONS.cls(r.cls)}</span></span></div>
           <div class="cc">${r.race}${r.cls}${isNew}</div>
           <div class="cn">${r.nick}</div>
           <div class="cf ${f}">${r.faction}</div>

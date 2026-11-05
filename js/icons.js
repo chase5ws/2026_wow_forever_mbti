@@ -26,8 +26,18 @@ const ICONS = (() => {
     "食人妖": `<path d="M18 10 H46 V40 C46 48 40 54 32 54 C24 54 18 48 18 40Z"/><path d="M24 24 L30 27 M40 24 L34 27 M28 38 H36"/><path d="M24 44 C22 50 18 54 12 56 M40 44 C42 50 46 54 52 56"/><path d="M18 18 H10 M46 18 H54"/>`
   };
 
+  // 種族頭像（截自遊戲角色選擇畫面），讀取失敗時退回線條圖示
+  const portrait = {
+    "人類": "human", "矮人": "dwarf", "夜精靈": "nightelf", "地精": "gnome",
+    "獸人": "orc", "不死族": "undead", "牛頭人": "tauren", "食人妖": "troll"
+  };
+
   return {
     cls: (name) => svg(cls[name] || ""),
-    race: (name) => svg(race[name] || "")
+    raceSvg: (name) => svg(race[name] || ""),
+    race: (name) =>
+      portrait[name]
+        ? `<img class="portrait" src="assets/races/${portrait[name]}.jpg" alt="${name}" loading="lazy" onerror="this.outerHTML=ICONS.raceSvg('${name}')">`
+        : svg(race[name] || "")
   };
 })();
