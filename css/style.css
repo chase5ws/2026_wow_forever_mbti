@@ -413,3 +413,30 @@ img.author-avatar { width: 56px; height: 56px; padding: 0; object-fit: cover; ba
 #intro .hint { margin: 0 0 4px; font-size: 12px; }
 #intro .btn { padding: 12px 16px; font-size: 15px; margin-top: 8px; }
 #intro .about { padding: 16px 18px; }
+
+/* ---------- IMSB 隱藏人格 ---------- */
+.imsb {
+  position: relative; text-align: center; padding: 26px 22px 22px;
+  background: radial-gradient(400px 200px at 50% 0%, #8b5a2b55, transparent 70%), #2a1d14;
+  border-bottom: 2px dashed #8b5a2b;
+}
+.poop { font-size: 96px; line-height: 1; animation: poop-drop .9s cubic-bezier(.3,1.6,.5,1) both, poop-wobble 2.4s ease-in-out 1s infinite; display: inline-block; }
+@keyframes poop-drop { from { transform: translateY(-120px) scale(.4); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes poop-wobble { 0%,100% { transform: rotate(-6deg); } 50% { transform: rotate(6deg) scale(1.05); } }
+.imsb-tag { margin: 8px 0 0; font-size: 12px; letter-spacing: .3em; color: #d9a46a; }
+.imsb h2 { margin: 2px 0 0; font: 800 48px/1 var(--display); letter-spacing: .12em; color: #e8b77d; }
+.imsb-nick { margin: 6px 0 14px; color: var(--gold-soft); font-weight: 600; }
+.imsb-voices { display: grid; gap: 8px; margin: 0 auto 14px; max-width: 420px; }
+.imsb-voices p { margin: 0; padding: 8px 14px; border-radius: 14px; font-weight: 600; font-size: 15px; }
+.imsb-voices .v1 { justify-self: start; background: #c8402c; color: #fff; border-bottom-left-radius: 4px; }
+.imsb-voices .v2 { justify-self: end; background: #3a3f55; color: #dfe4ff; border-bottom-right-radius: 4px; text-align: left; }
+.imsb-desc { margin: 0 0 10px; color: var(--text); }
+.imsb-list { text-align: left; margin: 0 auto 12px; padding-left: 20px; max-width: 460px; font-size: 14px; color: var(--muted); }
+.imsb-list li { margin-bottom: 4px; }
+.imsb-note { margin: 0; font-size: 12px; color: #9a8a74; }
+.imsb-cell { --c: #b07a45; background: linear-gradient(160deg, #3a2a1c, #1d1726 70%); border-style: dashed; }
+.poop-sm { font-size: 24px; }
+@media (prefers-reduced-motion: reduce) { .poop { animation: none; } }
+.opt.opt-poop { border-style: dashed; border-color: #8b5a2b; background: #2a1d1480; }
+.opt.opt-poop .key { color: #e8b77d; border-color: #8b5a2b; }
+.opt.opt-poop:hover { background: #8b5a2b33; border-color: #e8b77d; }

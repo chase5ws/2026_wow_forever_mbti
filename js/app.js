@@ -23,12 +23,16 @@
       const j = Math.floor(rnd() * (i + 1));
       [opts[i], opts[j]] = [opts[j], opts[i]];
     }
+    // 第一題彩蛋：撿大便 → 直接進入 IMSB 隱藏人格
+    if (q.id === 1) opts.push({ text: "都不要，我先蹲下來撿地上的大便 💩", special: "poop" });
     q.opts = opts;
   });
 
   const answers = new Array(TOTAL).fill(null);
   let idx = 0;
   let current = null; // 目前顯示的結果
+  let changes = 0;     // 改答案的次數（IMSB 彩蛋用）
+  let poopRoute = false; // 是否在第一題撿了大便
 
   const show = (id) => {
     document.querySelectorAll(".screen").forEach((s) => s.classList.toggle("active", s.id === id));
@@ -86,13 +90,25 @@
     q.opts.forEach((o, i) => {
       const b = document.createElement("button");
       b.className = "opt" + (answers[idx] === i ? " chosen" : "");
-      b.innerHTML = `<span class="key">${"ABCD"[i]}</span><span>${o.text}</span>`;
+      b.className += o.special ? " opt-poop" : "";
+      b.innerHTML = `<span class="key">${"ABCDE"[i]}</span><span>${o.text}</span>`;
       b.addEventListener("click", () => choose(i, b));
       box.appendChild(b);
     });
   }
 
   function choose(i, btn) {
+    if (QUESTIONS[idx].opts[i].special === "poop") {
+      answers[idx] = i;
+      poopRoute = true;
+      btn.classList.add("chosen");
+      setTimeout(() => {
+        window.STATS && STATS.hit("completes");
+        openType("IMSB");
+      }, 400);
+      return;
+    }
+    if (answers[idx] !== null && answers[idx] !== i) changes++;
     answers[idx] = i;
     $("options").querySelectorAll(".opt").forEach((o) => o.classList.remove("chosen"));
     btn.classList.add("chosen");
@@ -191,11 +207,39 @@
     };
   }
 
+  // IMSB 隱藏人格：改答案 5 次以上，或四個維度中有 3 個幾乎各半
+  const isImsb = (R) => changes >= 5 || R.strength.filter((x) => x.lv < 60).length >= 3;
+
+  function imsbHTML() {
+    return `
+      <div class="imsb">
+        <div class="poop" aria-hidden="true">💩</div>
+        <p class="imsb-tag">隱藏人格解鎖</p>
+        <h2>IMSB</h2>
+        <p class="imsb-nick">「傻者」・自我攻擊者</p>
+        <div class="imsb-voices">
+          <p class="v1">我衝了！</p>
+          <p class="v2">人家憑什麼看得上你？你去了就是自取其辱！</p>
+        </div>
+        <p class="imsb-desc">你的大腦裡隨時住著兩個極端的聲音，最後往往站在原地，默默看著對方離開。</p>
+        <ul class="imsb-list">
+          ${poopRoute ? `<li><b>開服第一件事，是蹲在北郡修道院撿大便</b></li>` : ""}
+          <li>在創角畫面待了兩小時，職業選了又刪、刪了又選</li>
+          <li>看到「徵坦補，缺你一個」，私訊打好又刪掉，最後看著隊伍滿員出發</li>
+          <li>站在副本門口，默默看著隊友一個一個走進去</li>
+          ${poopRoute ? "" : `<li>這份測驗的答案，你也改了好幾次 ${changes >= 5 ? `（${changes} 次）` : ""}</li>`}
+        </ul>
+        <p class="imsb-note">IMSB 出自網路爆紅的惡搞人格測試 SBTI（Bilibili 博主「蛆肉兒串兒」推出），純屬迷因娛樂，毫無科學根據。<br>別想了，下面就是你的正式選角，直接衝 ↓</p>
+      </div>`;
+  }
+
   function finish() {
     window.STATS && STATS.hit("completes");
     const pct = scorePct();
-    history.replaceState(null, "", `?p=${["E", "S", "T", "J"].map((k) => pct[k]).join("-")}`);
-    renderResult(analyze(pct));
+    const R = analyze(pct);
+    R.imsb = isImsb(R);
+    history.replaceState(null, "", `?p=${["E", "S", "T", "J"].map((k) => pct[k]).join("-")}${R.imsb ? "&s=1" : ""}`);
+    renderResult(R);
   }
 
   const comboName = (c) => c.race.name + c.cls.name;
@@ -258,7 +302,7 @@
 
     const card = $("resultCard");
     card.style.setProperty("--c", color);
-    card.innerHTML = `
+    card.innerHTML = `${R.imsb ? imsbHTML() : ""}
       <div class="r-hero">
         <p class="eyebrow">你的永恆服選角</p>
         <div class="emblems">
@@ -337,6 +381,11 @@
 
   function openType(type) {
     history.replaceState(null, "", `?t=${type}`);
+    if (type === "IMSB") {
+      const R = analyze({ E: 52, S: 48, T: 52, J: 48 });
+      R.imsb = true;
+      return renderResult(R);
+    }
     renderResult(analyze(idealPct(type)));
   }
 
@@ -370,7 +419,11 @@
           <div class="cf ${f}">${b.race.faction}</div>
         </button>`;
       })
-      .join("");
+      .join("") + `<button class="cell imsb-cell" data-type="IMSB">
+          <div class="cell-top"><span class="ct">？？？</span><span class="poop-sm">💩</span></div>
+          <div class="cc">隱藏人格</div>
+          <div class="cn">據說改答案改太多次的人會遇到</div>
+        </button>`;
     $("grid").querySelectorAll(".cell").forEach((c) => c.addEventListener("click", () => openType(c.dataset.type)));
     show("gallery");
   }
@@ -485,6 +538,16 @@
     ctx.fillStyle = "#a99c88"; ctx.font = `400 30px ${serif}`;
     ctx.fillText(`${best.race.faction}・${best.cls.role}${isNewCombo(best) ? "・★ 永恆服新組合" : ""}`, W / 2, 652);
 
+    // IMSB 彩蛋
+    if (R.imsb) {
+      ctx.save(); ctx.translate(W - 150, 150); ctx.rotate(0.18);
+      ctx.font = `110px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;
+      ctx.fillText("💩", 0, 30);
+      ctx.fillStyle = "#f3d9a1"; ctx.font = `800 30px ${display}`;
+      ctx.fillText("IMSB", 0, 90);
+      ctx.restore();
+    }
+
     // MBTI
     ctx.fillStyle = "#e6b35a"; ctx.font = `800 76px ${display}`;
     ctx.fillText(R.type, W / 2, 762);
@@ -584,6 +647,8 @@
 
   function reset() {
     answers.fill(null);
+    changes = 0;
+    poopRoute = false;
     idx = 0;
     current = null;
     history.replaceState(null, "", location.pathname);
@@ -616,7 +681,11 @@
   if (p.length === 4 && p.every((n) => Number.isFinite(n) && n >= 0 && n <= 100)) {
     const pct = {};
     ["E", "S", "T", "J"].forEach((k, i) => (pct[k] = p[i] === 50 ? 51 : p[i]));
-    renderResult(analyze(pct));
+    const R = analyze(pct);
+    R.imsb = qs.get("s") === "1" || isImsb(R);
+    renderResult(R);
+  } else if (t === "IMSB") {
+    openType("IMSB");
   } else if (TYPES[t]) {
     renderResult(analyze(idealPct(t)));
   }
