@@ -70,7 +70,10 @@
 
     <!-- 首頁 -->
     <section id="intro" class="screen active">
-      <div class="intro-banner" id="introBanner"></div>
+      <div class="intro-banner" id="introBanner">
+        <img src="assets/hero.jpg" alt="魔獸世界：永恆 主視覺" width="1280" height="720" fetchpriority="high">
+        <span class="fan-tag">非官方粉絲測驗</span>
+      </div>
       <div class="panel intro-panel">
         <p class="eyebrow">WORLD OF WARCRAFT · FOREVER</p>
         <h1>永恆服<br><span>MBTI 選角測試</span></h1>
@@ -80,8 +83,9 @@
           <li><b>9</b> 種族 × <b>9</b> 職業</li>
           <li>約 <b>3</b> 分鐘</li>
         </ul>
+        <p class="hint">請依照「平常的你」作答，沒有對錯，憑直覺選就好。</p>
         <button class="btn primary" id="startBtn">踏上旅程</button>
-        <button class="btn ghost" id="galleryBtn">先看看 16 型的典型選角</button>
+        <button class="btn ghost" id="galleryBtn">MBTI × 職業對照表</button>
       </div>
 
       <section class="about" aria-labelledby="aboutTitle">
@@ -136,7 +140,7 @@
         <button class="btn primary" id="shareBtn">產生分享圖片</button>
         <button class="btn" id="copyBtn">複製結果連結</button>
         <button class="btn" id="retryBtn">重新測驗</button>
-        <button class="btn ghost" id="galleryBtn2">查看 16 型典型選角</button>
+        <button class="btn ghost" id="galleryBtn2">MBTI × 職業對照表</button>
       </div>
       <p class="toast" id="toast" role="status" aria-live="polite"></p>
     </section>
@@ -144,9 +148,14 @@
     <!-- 圖鑑 -->
     <section id="gallery" class="screen">
       <div class="gallery-head">
-        <h2>16 型典型選角</h2>
+        <h2>MBTI × 職業對照</h2>
         <button class="btn ghost small" id="galleryBack">返回</button>
       </div>
+      <h3 class="sec-title">九大職業 × 推薦 MBTI</h3>
+      <p class="sec-sub">社群與榮格認知功能交叉分析的推薦。點職業可展開說明。</p>
+      <div class="class-table" id="classTable"></div>
+      <h3 class="sec-title">16 型的典型選角</h3>
+      <p class="sec-sub">以每個字母 80% 的典型傾向計算，點卡片看完整結果。</p>
       <div class="grid" id="grid"></div>
     </section>
 
@@ -166,6 +175,25 @@
       <p class="toast" id="shareToast" role="status" aria-live="polite"></p>
     </div>
   </div>
+  <!-- 統計與投票 -->
+  <section class="stats-wrap" aria-labelledby="statsTitle">
+    <h2 id="statsTitle">冒險者統計</h2>
+    <div class="stat-cards">
+      <div class="stat"><b id="statViews">—</b><small>網站瀏覽</small></div>
+      <div class="stat"><b id="statCompletes">—</b><small>完成測驗</small></div>
+      <div class="stat"><b id="statShares">—</b><small>分享次數</small></div>
+    </div>
+    <div class="vote-card">
+      <div class="vote-head"><h3>為了聯盟！還是為了部落！</h3><small id="voteFactionTotal"></small></div>
+      <div class="vote-list faction" id="voteFaction"></div>
+    </div>
+    <div class="vote-card">
+      <div class="vote-head"><h3>永恆服你要玩什麼職業？</h3><small id="voteClassTotal"></small></div>
+      <div class="vote-list" id="voteClass"></div>
+    </div>
+    <p class="stats-note">每個瀏覽器限投一票。統計由免費計數服務提供，可能有延遲。</p>
+  </section>
+
   <footer>
     <div class="author">
       <img class="author-avatar" src="assets/avatar.png" alt="Chase 的頭像" width="56" height="56">
@@ -180,12 +208,13 @@
         <a href="https://github.com/chase5ws/2026_wow_forever_mbti" target="_blank" rel="noopener">原始碼</a>
       </nav>
     </div>
-    <p class="disclaimer">© 2026 Chase・永恆服MBTI選角測試<br>非官方粉絲作品，與 Blizzard Entertainment 無關。魔獸世界及相關名稱為 Blizzard Entertainment, Inc. 之商標。種族頭像與職業圖示取自 Battle.net 遊戲畫面，版權屬 Blizzard Entertainment；場景插畫為原創繪製。本站不以營利為目的。</p>
+    <p class="disclaimer">© 2026 Chase・永恆服MBTI選角測試<br>僅供娛樂，並非科學人格測驗。非官方粉絲作品，與 Blizzard Entertainment 無關。魔獸世界及相關名稱為 Blizzard Entertainment, Inc. 之商標。種族頭像與職業圖示取自 Battle.net 遊戲畫面，版權屬 Blizzard Entertainment；場景插畫為原創繪製。本站不以營利為目的。</p>
   </footer>
   <script src="js/data.js"></script>
   <script src="js/results.js"></script>
   <script src="js/scenes.js"></script>
   <script src="js/icons.js"></script>
   <script src="js/app.js"></script>
+  <script src="js/stats.js"></script>
 </body>
 </html>

@@ -141,7 +141,10 @@
       .sort((x, y) => x.d - y.d)
       .map((r) => ({ ...r, m: match(r.d) }));
     const classes = Object.entries(CLASSES)
-      .map(([name, c]) => ({ name, ...c, d: dist(c.p) }))
+      .map(([name, c]) => {
+        const rec = CLASS_MBTI[name].types.includes(type); // 對照表推薦加分
+        return { name, ...c, rec, d: Math.max(0, dist(c.p) - (rec ? 0.4 : 0)) };
+      })
       .sort((x, y) => x.d - y.d)
       .map((c) => ({ ...c, m: match(c.d) }));
 
@@ -189,6 +192,7 @@
   }
 
   function finish() {
+    window.STATS && STATS.hit("completes");
     const pct = scorePct();
     history.replaceState(null, "", `?p=${["E", "S", "T", "J"].map((k) => pct[k]).join("-")}`);
     renderResult(analyze(pct));
@@ -222,7 +226,7 @@
         return `<div class="rank-row${chosen ? " chosen" : ""}" style="--rc:${isRace ? "var(--gold)" : CLASS_COLORS[x.name]}">
           <span class="rank-no">${i + 1}</span>
           <span class="rank-icon ${isRace ? factionClass(x.faction) : "cls"}">${isRace ? ICONS.race(x.name) : ICONS.cls(x.name)}</span>
-          <span class="rank-name">${x.name}${chosen ? `<em>選定</em>` : ""}</span>
+          <span class="rank-name">${x.name}${chosen ? `<em>選定</em>` : ""}${!isRace && x.rec ? `<em class="rec">推薦</em>` : ""}</span>
           <span class="rank-bar"><i style="width:${x.m}%"></i></span>
           <span class="rank-pct">${x.m}%</span>
         </div>`;
@@ -289,7 +293,13 @@
         <h3>為什麼是${best.cls.name}？</h3>
         <div class="why-row">
           <span class="why-icon cls">${ICONS.cls(best.cls.name)}</span>
-          <div><p class="muted">${best.cls.blurb}</p>${whyList(R.clsWhy)}</div>
+          <div><p class="muted">${best.cls.blurb}</p>${whyList(R.clsWhy)}
+            <div class="rec-box">
+              <small>社群推薦・${CLASS_MBTI[best.cls.name].trait}</small>
+              <div class="mb-list">${CLASS_MBTI[best.cls.name].types.map((x) => `<span class="mb${x === R.type ? " on" : ""}">${x}</span>`).join("")}</div>
+              <p>${CLASS_MBTI[best.cls.name].pos}</p>
+            </div>
+          </div>
         </div>
         <p class="note">${note}</p>
 
@@ -330,8 +340,25 @@
     renderResult(analyze(idealPct(type)));
   }
 
+  /* ================= 職業 × MBTI 對照表 ================= */
+  function renderClassTable() {
+    const myType = current ? current.type : null;
+    $("classTable").innerHTML = Object.entries(CLASS_MBTI)
+      .map(([name, m]) => `
+        <details class="ct-row" style="--rc:${CLASS_COLORS[name]}">
+          <summary>
+            <span class="ct-icon">${ICONS.cls(name)}</span>
+            <span class="ct-main"><b>${name}</b><small>${m.trait}</small></span>
+            <span class="mb-list">${m.types.map((t) => `<span class="mb${t === myType ? " on" : ""}">${t}</span>`).join("")}</span>
+          </summary>
+          <p>${m.pos}</p>
+        </details>`)
+      .join("");
+  }
+
   /* ================= 圖鑑 ================= */
   function renderGallery() {
+    renderClassTable();
     $("grid").innerHTML = Object.keys(TYPES)
       .map((type) => {
         const b = analyze(idealPct(type)).best;
@@ -529,6 +556,7 @@
     current ? `我在永恆服MBTI選角測試是 ${current.type}「${TYPES[current.type].nick}」，命定角色是 ${comboName(current.best)}！你呢？` : "永恆服MBTI選角測試";
 
   async function nativeShare() {
+    window.STATS && STATS.hit("shares");
     const url = location.href;
     try {
       if (shareBlob && navigator.canShare) {
@@ -544,6 +572,7 @@
   }
 
   async function copyLink() {
+    window.STATS && STATS.hit("shares");
     const msg = `${shareText()}\n${location.href}`;
     try {
       await navigator.clipboard.writeText(msg);
@@ -564,13 +593,16 @@
 
   /* ================= 事件 ================= */
   buildSteps();
-  $("introBanner").innerHTML = SCENES.render("mountain");
+  // 首頁主視覺讀取失敗時，退回原創插畫
+  const heroImg = document.querySelector("#introBanner img");
+  if (heroImg) heroImg.addEventListener("error", () => { heroImg.outerHTML = SCENES.render("mountain"); });
   $("startBtn").addEventListener("click", reset);
   $("retryBtn").addEventListener("click", reset);
   $("galleryBtn").addEventListener("click", renderGallery);
   $("galleryBtn2").addEventListener("click", renderGallery);
   $("galleryBack").addEventListener("click", () => (current ? show("result") : show("intro")));
   $("shareBtn").addEventListener("click", openShare);
+  $("downloadBtn").addEventListener("click", () => window.STATS && STATS.hit("shares"));
   $("copyBtn").addEventListener("click", copyLink);
   $("nativeShareBtn").addEventListener("click", nativeShare);
   $("closeShare").addEventListener("click", () => $("shareModal").classList.remove("open"));
