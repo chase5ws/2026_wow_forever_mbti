@@ -496,3 +496,20 @@ img.author-avatar { width: 56px; height: 56px; padding: 0; object-fit: cover; ba
 .fb-done-icon { font-size: 48px; }
 .fb-done p { color: var(--muted); }
 .fb-acc { grid-template-columns: repeat(3, 1fr); }
+.opt-tag { font-style: normal; font-size: 11px; margin-left: 8px; padding: 1px 6px; border-radius: 4px; color: var(--gold-soft); border: 1px solid #e6b35a66; white-space: nowrap; vertical-align: 1px; }
+
+/* ---------- 右上角快捷按鈕 ---------- */
+.top-actions { position: fixed; top: 12px; right: 12px; z-index: 40; display: flex; gap: 8px; }
+.top-actions .feedback-btn { position: static; }
+.top-btn {
+  padding: 7px 12px; border-radius: 99px; cursor: pointer;
+  font: 600 13px var(--serif); color: var(--gold-soft);
+  background: #17121fe6; border: 1px solid #e6b35a88; box-shadow: 0 4px 16px #0008; backdrop-filter: blur(4px);
+}
+.top-btn:hover { background: #2a1f35; border-color: var(--gold); }
+.progress-top { padding-right: 168px; }
+@media (max-width: 420px) {
+  .top-btn { padding: 6px 9px; font-size: 12px; }
+  .progress-top { padding-right: 150px; }
+  .progress-top .dim-tag { display: none; }
+}

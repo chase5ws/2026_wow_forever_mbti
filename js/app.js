@@ -25,6 +25,7 @@
     }
     // 第一題彩蛋：撿大便 → 直接進入 IMSB 隱藏人格
     if (q.id === 1) opts.push({ text: "都不要，我先蹲下來撿地上的大便 💩", special: "poop" });
+    if (PLAYER_OPTIONS[q.id]) opts.push({ ...PLAYER_OPTIONS[q.id], player: true });
     q.opts = opts;
   });
 
@@ -91,7 +92,7 @@
       const b = document.createElement("button");
       b.className = "opt" + (answers[idx] === i ? " chosen" : "");
       b.className += o.special ? " opt-poop" : "";
-      b.innerHTML = `<span class="key">${"ABCDE"[i]}</span><span>${o.text}</span>`;
+      b.innerHTML = `<span class="key">${"ABCDE"[i]}</span><span>${o.text}${o.player ? `<em class="opt-tag">玩家建議</em>` : ""}</span>`;
       b.addEventListener("click", () => choose(i, b));
       box.appendChild(b);
     });
@@ -129,8 +130,11 @@
     answers.forEach((ai, qi) => {
       if (ai === null) return;
       const o = QUESTIONS[qi].opts[ai];
-      pts[o.pole] = (pts[o.pole] || 0) + o.w;
-      cnt[o.pole] = (cnt[o.pole] || 0) + 1;
+      const poles = o.poles || (o.pole ? { [o.pole]: o.w } : {});
+      Object.entries(poles).forEach(([pole, w]) => {
+        pts[pole] = (pts[pole] || 0) + w;
+        cnt[pole] = (cnt[pole] || 0) + 1;
+      });
     });
     const pct = {};
     PAIRS.forEach(([a, b]) => {
@@ -638,7 +642,7 @@
     ctx.fillStyle = "#00000066";
     ctx.beginPath(); ctx.arc(xR + S / 2, y0 + S / 2, S / 2, 0, Math.PI * 2); ctx.fill();
     try {
-      const icon = await loadImg(`assets/classes/${ICONS.clsKey(best.cls.name)}.png`);
+      const icon = await loadImg(`assets/classes/${ICONS.clsKey(best.cls.name)}.png?v=3`);
       ctx.save(); ctx.beginPath(); ctx.arc(xR + S / 2, y0 + S / 2, S / 2 - 4, 0, Math.PI * 2); ctx.clip();
       ctx.drawImage(icon, xR + 4, y0 + 4, S - 8, S - 8); ctx.restore();
     } catch (e) {
@@ -781,6 +785,11 @@
   const heroImg = document.querySelector("#introBanner img");
   if (heroImg) heroImg.addEventListener("error", () => { heroImg.outerHTML = SCENES.render("mountain"); });
   $("startBtn").addEventListener("click", reset);
+  $("homeBtn").addEventListener("click", () => {
+    history.replaceState(null, "", location.pathname);
+    document.querySelectorAll(".modal.open").forEach((m) => m.classList.remove("open"));
+    show("intro");
+  });
   $("retryBtn").addEventListener("click", reset);
   $("galleryBtn").addEventListener("click", renderGallery);
   $("galleryBtn2").addEventListener("click", renderGallery);

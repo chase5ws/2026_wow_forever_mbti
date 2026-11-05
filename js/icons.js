@@ -45,7 +45,7 @@ const ICONS = (() => {
     clsSvg: (name) => svg(cls[name] || ""),
     cls: (name) =>
       clsKey[name]
-        ? `<img class="portrait class-img" src="assets/classes/${clsKey[name]}.png" alt="${name}" loading="lazy" onerror="this.outerHTML=ICONS.clsSvg('${name}')">`
+        ? `<img class="portrait class-img" src="assets/classes/${clsKey[name]}.png?v=3" alt="${name}" loading="lazy" onerror="this.outerHTML=ICONS.clsSvg('${name}')">`
         : svg(cls[name] || ""),
     raceSvg: (name) => svg(race[name] || ""),
     race: (name) =>
