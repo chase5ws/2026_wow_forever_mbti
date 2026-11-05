@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>永恆服選角測驗</title>
+  <meta name="description" content="20 道艾澤拉斯經典劇情情境題，用 MBTI 性向找出最適合你的永恆服種族與職業。">
+  <meta property="og:title" content="永恆服選角測驗｜你該玩哪個種族職業？">
+  <meta property="og:description" content="20 道經典劇情情境題，找出你的 16 型種族職業組合。">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚔️</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Noto+Serif+TC:wght@400;600;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <main id="app">
+
+    <!-- 首頁 -->
+    <section id="intro" class="screen active">
+      <div class="intro-banner" id="introBanner"></div>
+      <div class="panel intro-panel">
+        <p class="eyebrow">WORLD OF WARCRAFT · FOREVER</p>
+        <h1>永恆服<br><span>選角性向測驗</span></h1>
+        <p class="lead">20 道艾澤拉斯經典劇情情境題，<br>從北郡修道院到海加爾山，找出最適合你的種族與職業。</p>
+        <ul class="intro-meta">
+          <li><b>20</b> 道情境題</li>
+          <li><b>16</b> 種種族職業</li>
+          <li>約 <b>3</b> 分鐘</li>
+        </ul>
+        <button class="btn primary" id="startBtn">踏上旅程</button>
+        <button class="btn ghost" id="galleryBtn">先看看 16 種結果</button>
+      </div>
+    </section>
+
+    <!-- 測驗 -->
+    <section id="quiz" class="screen">
+      <div class="progress">
+        <button class="back" id="backBtn" aria-label="上一題">‹</button>
+        <div class="bar"><i id="barFill"></i></div>
+        <span id="counter">1 / 20</span>
+      </div>
+      <article class="panel q-card" id="qCard">
+        <div class="scene" id="scene"></div>
+        <div class="q-body">
+          <p class="place" id="place"></p>
+          <h2 id="qTitle"></h2>
+          <p class="story" id="story"></p>
+          <details class="lore"><summary>經典典故</summary><p id="lore"></p></details>
+          <p class="q" id="qText"></p>
+          <div class="options" id="options"></div>
+        </div>
+      </article>
+    </section>
+
+    <!-- 結果 -->
+    <section id="result" class="screen">
+      <article class="panel result-card" id="resultCard"></article>
+      <div class="actions">
+        <button class="btn primary" id="shareBtn">複製結果連結</button>
+        <button class="btn" id="retryBtn">重新測驗</button>
+        <button class="btn ghost" id="galleryBtn2">查看全部 16 型</button>
+      </div>
+      <p class="toast" id="toast" role="status" aria-live="polite"></p>
+    </section>
+
+    <!-- 圖鑑 -->
+    <section id="gallery" class="screen">
+      <div class="gallery-head">
+        <h2>16 型種族職業圖鑑</h2>
+        <button class="btn ghost small" id="galleryBack">返回</button>
+      </div>
+      <div class="grid" id="grid"></div>
+    </section>
+
+  </main>
+  <footer>
+    非官方粉絲作品，與 Blizzard Entertainment 無關。魔獸世界及相關名稱為 Blizzard Entertainment, Inc. 之商標。場景插畫為原創繪製。
+  </footer>
+  <script src="js/data.js"></script>
+  <script src="js/scenes.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
