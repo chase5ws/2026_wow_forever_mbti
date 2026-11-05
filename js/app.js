@@ -5,11 +5,43 @@
   const AUTHOR_LINK = "github.com/chase5ws";
   const PAIRS = [["E", "I"], ["S", "N"], ["T", "F"], ["J", "P"]];
   const DIMS = ["EI", "SN", "TF", "JP"];
-  const TOTAL = QUESTIONS.length;
+  const DIM_KEYS = ["EI", "SN", "TF", "JP"];
+  const TOTAL = DIM_KEYS.length * QUIZ_PER_DIM;
   const factionClass = (f) => (f === "聯盟" ? "alliance" : f === "部落" ? "horde" : "both");
+  const POOP = { text: "都不要，我先蹲下來撿地上的大便 💩", special: "poop" };
+  const shuffle = (arr) => {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  };
 
-  /* ================= 題目選項（強烈 2 分 / 稍微 1 分） ================= */
-  QUESTIONS.forEach((q) => {
+  /* ================= 抽題（每次測驗都不一樣） ================= */
+  // 每個維度抽 QUIZ_PER_DIM 題，保證至少一題部落劇情、聯盟劇情最多兩題，再打亂整體順序
+  function drawQuestions() {
+    const picked = [];
+    DIM_KEYS.forEach((dim) => {
+      const pool = shuffle(QUESTIONS.filter((q) => q.dim === dim));
+      const horde = pool.filter((q) => q.faction === "H");
+      const chosen = horde.length ? [horde[0]] : [];
+      let alliance = 0;
+      for (const q of pool) {
+        if (chosen.length >= QUIZ_PER_DIM) break;
+        if (chosen.includes(q)) continue;
+        if (q.faction === "A" && alliance >= 2) continue;
+        if (q.faction === "A") alliance++;
+        chosen.push(q);
+      }
+      // 題庫不夠時補滿
+      pool.forEach((q) => { if (chosen.length < QUIZ_PER_DIM && !chosen.includes(q)) chosen.push(q); });
+      picked.push(...chosen);
+    });
+    return shuffle(picked).map((q, n) => ({ ...q, opts: buildOptions(q, n === 0) }));
+  }
+
+  /* ================= 題目選項（強烈 2 分 / 稍微 1 分，每次隨機排序） ================= */
+  function buildOptions(q, first) {
     const extra = EXTRA_OPTIONS[q.id] || [];
     const opts = [
       { text: q.a.text, pole: q.a.pole, w: 2 },
@@ -17,18 +49,14 @@
     ];
     if (extra[0]) opts.push({ text: extra[0], pole: q.a.pole, w: 1 });
     if (extra[1]) opts.push({ text: extra[1], pole: q.b.pole, w: 1 });
-    let s = q.id * 7919;
-    const rnd = () => (s = (s * 9301 + 49297) % 233280) / 233280;
-    for (let i = opts.length - 1; i > 0; i--) {
-      const j = Math.floor(rnd() * (i + 1));
-      [opts[i], opts[j]] = [opts[j], opts[i]];
-    }
+    shuffle(opts);
     // 第一題彩蛋：撿大便 → 直接進入 IMSB 隱藏人格
-    if (q.id === 1) opts.push({ text: "都不要，我先蹲下來撿地上的大便 💩", special: "poop" });
+    if (first) opts.push({ ...POOP });
     if (PLAYER_OPTIONS[q.id]) opts.push({ ...PLAYER_OPTIONS[q.id], player: true });
-    q.opts = opts;
-  });
+    return opts;
+  }
 
+  let QS = drawQuestions(); // 本次測驗的 20 題
   const answers = new Array(TOTAL).fill(null);
   let idx = 0;
   let current = null; // 目前顯示的結果
@@ -64,7 +92,7 @@
     const done = answeredCount();
     $("counter").innerHTML = `第 <b>${idx + 1}</b> 題 <span>/ 共 ${TOTAL} 題</span>`;
     $("remain").textContent = done === TOTAL ? "已全部作答" : `已答 ${done} 題・還剩 ${TOTAL - done} 題`;
-    $("dimTag").textContent = DIM_NAMES[QUESTIONS[idx].dim];
+    $("dimTag").textContent = DIM_NAMES[QS[idx].dim];
     $("backBtn").disabled = idx === 0;
     const reachable = firstUnanswered();
     [...$("steps").children].forEach((el, i) => {
@@ -75,7 +103,7 @@
 
   /* ================= 題目 ================= */
   function renderQuestion() {
-    const q = QUESTIONS[idx];
+    const q = QS[idx];
     $("scene").innerHTML = sceneHTML(q);
     $("sceneNo").textContent = String(idx + 1).padStart(2, "0");
     $("place").textContent = q.place;
@@ -92,14 +120,14 @@
       const b = document.createElement("button");
       b.className = "opt" + (answers[idx] === i ? " chosen" : "");
       b.className += o.special ? " opt-poop" : "";
-      b.innerHTML = `<span class="key">${"ABCDE"[i]}</span><span>${o.text}${o.player ? `<em class="opt-tag">玩家建議</em>` : ""}</span>`;
+      b.innerHTML = `<span class="key">${"ABCDEF"[i]}</span><span>${o.text}${o.player ? `<em class="opt-tag">玩家建議</em>` : ""}</span>`;
       b.addEventListener("click", () => choose(i, b));
       box.appendChild(b);
     });
   }
 
   function choose(i, btn) {
-    if (QUESTIONS[idx].opts[i].special === "poop") {
+    if (QS[idx].opts[i].special === "poop") {
       answers[idx] = i;
       poopRoute = true;
       btn.classList.add("chosen");
@@ -129,7 +157,7 @@
     const pts = {}, cnt = {};
     answers.forEach((ai, qi) => {
       if (ai === null) return;
-      const o = QUESTIONS[qi].opts[ai];
+      const o = QS[qi].opts[ai];
       const poles = o.poles || (o.pole ? { [o.pole]: o.w } : {});
       Object.entries(poles).forEach(([pole, w]) => {
         pts[pole] = (pts[pole] || 0) + w;
@@ -274,7 +302,7 @@
 
         <h3>招牌大便行為</h3>
         <ul class="imsb-list">
-          ${poopRoute ? `<li><b>開服第一件事，是蹲在北郡修道院撿大便</b></li>` : ""}
+          ${poopRoute ? `<li><b>開服第一件事，是在「${QS[0].place}」蹲下來撿大便</b></li>` : ""}
           ${I.habits.map((h) => `<li>${h}</li>`).join("")}
         </ul>
 
@@ -769,6 +797,7 @@
   }
 
   function reset() {
+    QS = drawQuestions();
     answers.fill(null);
     changes = 0;
     poopRoute = false;
