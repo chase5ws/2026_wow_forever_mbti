@@ -502,7 +502,7 @@
     ctx.fillStyle = "#e6b35a"; ctx.font = `600 28px ${serif}`;
     ctx.fillText(SITE_URL.replace(/^https?:\/\//, "").replace(/\/$/, ""), W / 2, fy + 104);
     ctx.fillStyle = "#7f7466"; ctx.font = `400 22px ${serif}`;
-    ctx.fillText(`by ${AUTHOR}・${AUTHOR_LINK}・非官方粉絲作品`, W / 2, fy + 144);
+    ctx.fillText(`開發者 ${AUTHOR}・${AUTHOR_LINK}・非官方粉絲作品`, W / 2, fy + 144);
 
     return cv;
   }

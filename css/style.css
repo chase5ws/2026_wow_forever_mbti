@@ -335,3 +335,12 @@ img.class-img { border-radius: 50%; }
 .emblem.cls .ring { padding: 0; overflow: hidden; border: 3px solid #c9a35a; box-shadow: 0 0 0 2px #3a2a14, 0 0 0 4px currentColor, 0 0 24px -2px currentColor; }
 .why-icon.cls, .rank-icon.cls { overflow: hidden; }
 .cell .ci { border-radius: 50%; overflow: hidden; border: 1px solid #c9a35a; }
+img.author-avatar { width: 56px; height: 56px; padding: 0; object-fit: cover; background: none; border: 2px solid var(--gold); box-shadow: 0 0 0 3px #00000088; }
+
+/* ---------- 首頁說明（SEO） ---------- */
+.about { margin-top: 18px; padding: 20px 22px; border-radius: var(--radius); border: 1px solid #ffffff14; background: #ffffff05; }
+.about h2 { margin: 0 0 8px; font-size: 18px; color: var(--gold-soft); }
+.about p { margin: 0 0 10px; font-size: 14px; color: var(--muted); }
+.about details { border-top: 1px solid #ffffff10; padding: 10px 0 0; margin-top: 10px; }
+.about summary { cursor: pointer; font-size: 15px; color: var(--text); }
+.about details p { margin: 8px 0 0; }

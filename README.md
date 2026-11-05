@@ -43,6 +43,6 @@ assets/scenes/   ← 自訂題目截圖（選用）
 
 ---
 
-作者：[Chase](https://github.com/chase5ws)
+開發者：[Chase](https://github.com/chase5ws)
 
-非官方粉絲作品，不以營利為目的，與 Blizzard Entertainment 無關。魔獸世界及相關名稱為 Blizzard Entertainment, Inc. 之商標；種族頭像與職業圖示取自遊戲畫面，版權屬原權利人。
+非官方粉絲作品，不以營利為目的，與 Blizzard Entertainment 無關。魔獸世界及相關名稱為 Blizzard Entertainment, Inc. 之商標；種族頭像與職業圖示取自 Battle.net 遊戲畫面，版權屬 Blizzard Entertainment。
