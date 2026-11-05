@@ -71,8 +71,6 @@ const STATS = (() => {
   function render() {
     if (!$("statViews")) return;
     $("statViews").textContent = fmt(values.views);
-    $("statCompletes").textContent = fmt(values.completes);
-    $("statShares").textContent = fmt(values.shares);
 
     const myF = store.get("vote-faction");
     $("voteFaction").innerHTML = bars(FACTIONS, "vote-faction", myF);
@@ -102,7 +100,7 @@ const STATS = (() => {
 
   async function init() {
     render();
-    const keys = ["completes", "shares",
+    const keys = [
       ...FACTIONS.map((x) => `vote-faction-${x.key}`),
       ...Object.values(CLASS_KEYS).map((k) => `vote-class-${k}`)];
     // 瀏覽次數：同一個分頁工作階段只算一次

@@ -513,3 +513,5 @@ img.author-avatar { width: 56px; height: 56px; padding: 0; object-fit: cover; ba
   .progress-top { padding-right: 150px; }
   .progress-top .dim-tag { display: none; }
 }
+@media (min-width: 1080px) { .progress-top { padding-right: 0; } }
+.stat-cards { grid-template-columns: 1fr; }
