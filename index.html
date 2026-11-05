@@ -63,9 +63,11 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Noto+Serif+TC:wght@400;600;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=20261105e">
+  <link rel="stylesheet" href="css/style.css?v=20261105h">
 </head>
 <body>
+  <button class="feedback-btn" id="feedbackBtn" aria-label="回報問題或建議">💬 回報</button>
+
   <main id="app">
 
     <!-- 首頁 -->
@@ -136,6 +138,7 @@
     <!-- 結果 -->
     <section id="result" class="screen">
       <article class="panel result-card" id="resultCard"></article>
+      <button class="fb-prompt" data-feedback="結果不準">🤔 結果不準？告訴我們你其實想玩什麼，幫我們改進</button>
       <div class="actions">
         <button class="btn primary" id="shareBtn">產生分享圖片</button>
         <button class="btn" id="copyBtn">複製結果連結</button>
@@ -175,6 +178,39 @@
       <p class="toast" id="shareToast" role="status" aria-live="polite"></p>
     </div>
   </div>
+  <!-- 回報 -->
+  <div class="modal" id="feedbackModal" role="dialog" aria-modal="true" aria-labelledby="fbTitle">
+    <div class="modal-box">
+      <div class="modal-head">
+        <b id="fbTitle">回報給開發者</b>
+        <button class="modal-x" id="fbClose" aria-label="關閉">×</button>
+      </div>
+      <form id="fbForm" class="fb-form">
+        <label class="fb-field"><span>回報類型</span>
+          <select id="fbCategory">
+            <option>結果不準</option><option>題目建議</option><option>畫面或功能有問題</option><option>其他想說的</option>
+          </select>
+        </label>
+        <div class="fb-field"><span>這次的結果準嗎？</span><div class="fb-acc" id="fbAcc"></div></div>
+        <div class="fb-row">
+          <label class="fb-field"><span>你其實想玩的職業</span><select id="fbClass"></select></label>
+          <label class="fb-field"><span>你其實想玩的種族</span><select id="fbRace"></select></label>
+        </div>
+        <label class="fb-field"><span>想說的話</span>
+          <textarea id="fbMessage" rows="4" maxlength="1000" placeholder="例如：哪一題沒有我的答案、希望加什麼題目、哪裡壞掉了…"></textarea>
+        </label>
+        <p class="fb-context" id="fbContext"></p>
+        <button class="btn primary" type="submit" id="fbSubmit">送出回報</button>
+        <p class="toast" id="fbStatus" role="status" aria-live="polite"></p>
+      </form>
+      <div class="fb-done" id="fbDone" hidden>
+        <div class="fb-done-icon">📜</div>
+        <p><b>收到你的回報了，感謝冒險者！</b><br>我們會參考大家的意見調整題目與計分。</p>
+        <button class="btn" id="fbDoneClose">關閉</button>
+      </div>
+    </div>
+  </div>
+
   <!-- 統計與投票 -->
   <section class="stats-wrap" aria-labelledby="statsTitle">
     <h2 id="statsTitle">冒險者統計</h2>
@@ -210,12 +246,13 @@
     </div>
     <p class="disclaimer">© 2026 Chase・永恆服MBTI選角測試<br>僅供娛樂，並非科學人格測驗。非官方粉絲作品，與 Blizzard Entertainment 無關。魔獸世界及相關名稱為 Blizzard Entertainment, Inc. 之商標。種族頭像與職業圖示取自 Battle.net 遊戲畫面，版權屬 Blizzard Entertainment；場景插畫為原創繪製。本站不以營利為目的。</p>
   </footer>
-  <script src="js/data.js?v=20261105e"></script>
-  <script src="js/results.js?v=20261105e"></script>
-  <script src="js/scenes.js?v=20261105e"></script>
-  <script src="js/icons.js?v=20261105e"></script>
-  <script src="js/imsb.js?v=20261105e"></script>
-  <script src="js/app.js?v=20261105e"></script>
-  <script src="js/stats.js?v=20261105e"></script>
+  <script src="js/data.js?v=20261105h"></script>
+  <script src="js/results.js?v=20261105h"></script>
+  <script src="js/scenes.js?v=20261105h"></script>
+  <script src="js/icons.js?v=20261105h"></script>
+  <script src="js/imsb.js?v=20261105h"></script>
+  <script src="js/app.js?v=20261105h"></script>
+  <script src="js/stats.js?v=20261105h"></script>
+  <script src="js/feedback.js?v=20261105h"></script>
 </body>
 </html>

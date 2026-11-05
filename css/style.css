@@ -457,3 +457,42 @@ img.author-avatar { width: 56px; height: 56px; padding: 0; object-fit: cover; ba
 .r-body .imsb-list { margin: 0; max-width: none; }
 .imsb-hero ~ .r-body .why-lines .pole { background: transparent; font-size: 16px; }
 .imsb-hero ~ .r-body .imsb-note { margin-top: 18px; text-align: center; }
+
+/* ---------- 回報 ---------- */
+.feedback-btn {
+  position: fixed; top: 12px; right: 12px; z-index: 40;
+  padding: 7px 12px; border-radius: 99px; cursor: pointer;
+  font: 600 13px var(--serif); color: var(--gold-soft);
+  background: #17121fe6; border: 1px solid #e6b35a88; box-shadow: 0 4px 16px #0008;
+  backdrop-filter: blur(4px);
+}
+.feedback-btn:hover { background: #2a1f35; border-color: var(--gold); }
+.progress-top { padding-right: 82px; }
+.fb-prompt {
+  display: block; width: 100%; margin: 12px 0 0; padding: 12px 14px; border-radius: 10px; cursor: pointer;
+  font: 400 14px var(--serif); color: var(--gold-soft); text-align: center;
+  background: #e6b35a10; border: 1px dashed #e6b35a66;
+}
+.fb-prompt:hover { background: #e6b35a1f; }
+.fb-form { display: grid; gap: 12px; }
+.fb-field { display: grid; gap: 6px; font-size: 14px; }
+.fb-field > span { color: var(--muted); font-size: 13px; }
+.fb-form select, .fb-form textarea {
+  width: 100%; padding: 10px 12px; border-radius: 8px; font: 400 15px var(--serif);
+  color: var(--text); background: #0e0b14; border: 1px solid #ffffff26;
+}
+.fb-form textarea { resize: vertical; min-height: 90px; }
+.fb-form select:focus, .fb-form textarea:focus { outline: 2px solid var(--gold); outline-offset: 1px; }
+.fb-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.fb-acc { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.fb-acc label { cursor: pointer; }
+.fb-acc input { position: absolute; opacity: 0; pointer-events: none; }
+.fb-acc span { display: block; text-align: center; padding: 8px 2px; border-radius: 8px; font-size: 12px; border: 1px solid #ffffff22; background: #ffffff08; }
+.fb-acc input:checked + span { background: var(--gold); color: var(--bg); border-color: var(--gold); font-weight: 700; }
+.fb-acc input:focus-visible + span { outline: 2px solid var(--gold); }
+.fb-context { margin: 0; font-size: 12px; color: var(--muted); word-break: break-all; }
+.fb-form .btn { margin-top: 0; }
+.fb-done { text-align: center; padding: 10px 0; }
+.fb-done-icon { font-size: 48px; }
+.fb-done p { color: var(--muted); }
+.fb-acc { grid-template-columns: repeat(3, 1fr); }

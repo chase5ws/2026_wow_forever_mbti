@@ -510,6 +510,15 @@
     ctx.closePath();
   }
 
+  // 分享圖左上角的永恆 logo
+  async function drawLogo(ctx) {
+    try {
+      const logo = await loadImg("assets/logo.png");
+      const h = 170, w = (logo.width / logo.height) * h;
+      ctx.drawImage(logo, 62, 52, w, h);
+    } catch (e) {}
+  }
+
   async function drawImsbCard() {
     const W = 1080, H = 1440, I = IMSB;
     const cv = document.createElement("canvas");
@@ -530,6 +539,7 @@
     ctx.textAlign = "center";
     ctx.fillStyle = "#e8b77d"; ctx.font = `600 30px ${serif}`;
     ctx.fillText("永恆服MBTI選角測試・隱藏人格解鎖", W / 2, 118);
+    await drawLogo(ctx);
 
     ctx.font = `220px ${emoji}`;
     ctx.fillText("💩", W / 2, 400);
@@ -605,6 +615,7 @@
     ctx.fillStyle = "#e6b35a";
     ctx.font = `600 30px ${serif}`;
     ctx.fillText("永恆服MBTI選角測試", W / 2, 118);
+    await drawLogo(ctx);
     ctx.fillStyle = "#a99c88";
     ctx.font = `400 28px ${serif}`;
     ctx.fillText("我的命定角色是", W / 2, 168);
