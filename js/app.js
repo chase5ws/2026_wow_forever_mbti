@@ -6,7 +6,7 @@
   const PAIRS = [["E", "I"], ["S", "N"], ["T", "F"], ["J", "P"]];
   const DIMS = ["EI", "SN", "TF", "JP"];
   const DIM_KEYS = ["EI", "SN", "TF", "JP"];
-  const TOTAL = DIM_KEYS.length * QUIZ_PER_DIM;
+  const TOTAL = DIM_KEYS.length * QUIZ_PER_DIM + PREF_QUESTIONS.length;
   const factionClass = (f) => (f === "聯盟" ? "alliance" : f === "部落" ? "horde" : "both");
   const POOP = { text: "都不要，我先蹲下來撿地上的大便 💩", special: "poop" };
   const shuffle = (arr) => {
@@ -37,7 +37,9 @@
       pool.forEach((q) => { if (chosen.length < QUIZ_PER_DIM && !chosen.includes(q)) chosen.push(q); });
       picked.push(...chosen);
     });
-    return shuffle(picked).map((q, n) => ({ ...q, opts: buildOptions(q, n === 0) }));
+    const mbti = shuffle(picked).map((q, n) => ({ ...q, opts: buildOptions(q, n === 0) }));
+    // 最後固定兩題選角偏好（不打亂、不計分）
+    return mbti.concat(PREF_QUESTIONS.map((q) => ({ ...q, opts: q.opts.map((o) => ({ ...o })) })));
   }
 
   /* ================= 題目選項（強烈 2 分 / 稍微 1 分，每次隨機排序） ================= */
@@ -56,7 +58,7 @@
     return opts;
   }
 
-  let QS = drawQuestions(); // 本次測驗的 20 題
+  let QS = drawQuestions(); // 本次測驗的 20 題 + 2 題偏好
   const answers = new Array(TOTAL).fill(null);
   let idx = 0;
   let current = null; // 目前顯示的結果
@@ -176,7 +178,7 @@
   }
 
   // 從百分比推出完整結果（分享連結也走這裡，結果完全一致）
-  function analyze(pct) {
+  function analyze(pct, pref = {}) {
     const u = {};
     PAIRS.forEach(([a], i) => (u[DIMS[i]] = (pct[a] - 50) / 50));
     const type = PAIRS.map(([a, b]) => (pct[a] > 50 ? a : b)).join("");
@@ -184,17 +186,22 @@
     const dist = (p) => DIMS.reduce((s, d) => s + (u[d] - p[d]) ** 2, 0);
     const match = (d) => Math.max(1, Math.min(99, Math.round(100 * (1 - d / 6))));
 
+    const role = ROLE_CLASSES[pref.role] ? pref.role : "";
+    const faction = FACTION_NAMES[pref.faction] ? pref.faction : "";
     const races = Object.entries(RACES)
+      .filter(([, r]) => !faction || r.faction.includes(FACTION_NAMES[faction]))
       .map(([key, r]) => ({ key, ...r, d: dist(r.p) }))
       .sort((x, y) => x.d - y.d)
       .map((r) => ({ ...r, m: match(r.d) }));
     const classes = Object.entries(CLASSES)
       .map(([name, c]) => {
         const rec = CLASS_MBTI[name].types.includes(type); // 對照表推薦加分
-        return { name, ...c, rec, d: Math.max(0, dist(c.p) - (rec ? 0.4 : 0)) };
+        const fit = !role || ROLE_CLASSES[role].includes(name); // 符合想玩的定位
+        const raw = Math.max(0, dist(c.p) - (rec ? 0.4 : 0));
+        // 契合度 % 只看性格；排序與選角再扣掉不符合定位的職業
+        return { name, ...c, rec, fit: role && fit, m: match(raw), d: raw + (fit ? 0 : ROLE_PENALTY) };
       })
-      .sort((x, y) => x.d - y.d)
-      .map((c) => ({ ...c, m: match(c.d) }));
+      .sort((x, y) => x.d - y.d);
 
     const combos = [];
     races.forEach((r) =>
@@ -233,7 +240,7 @@
 
     const best = combos[0];
     return {
-      pct, type, races, classes, best, second: combos[1],
+      pct, type, races, classes, best, second: combos[1], role, faction,
       raceWhy: whyLines(best.race), clsWhy: whyLines(best.cls),
       strength, shadow
     };
@@ -325,10 +332,24 @@
   function finish() {
     window.STATS && STATS.hit("completes");
     const pct = scorePct();
-    history.replaceState(null, "", `?p=${["E", "S", "T", "J"].map((k) => pct[k]).join("-")}`);
-    renderResult(analyze(pct));
+    const pref = {};
+    answers.forEach((ai, qi) => {
+      const o = ai === null ? null : QS[qi].opts[ai];
+      if (o && "role" in o) pref.role = o.role;
+      if (o && "faction" in o) pref.faction = o.faction;
+    });
+    const R = analyze(pct, pref);
+    history.replaceState(null, "", "?" + prefQuery(pct, R));
+    renderResult(R);
   }
 
+  // 分享網址：?p=E-S-T-J，有選偏好時加上 &r=定位&f=陣營
+  const prefQuery = (pct, R) => {
+    const q = new URLSearchParams({ p: ["E", "S", "T", "J"].map((k) => pct[k]).join("-") });
+    if (R.role) q.set("r", R.role);
+    if (R.faction) q.set("f", R.faction);
+    return q.toString();
+  };
   const comboName = (c) => c.race.name + c.cls.name;
   const isNewCombo = (c) => NEW_COMBOS.includes(`${c.race.key}-${c.cls.name}`);
 
@@ -357,7 +378,7 @@
         return `<div class="rank-row${chosen ? " chosen" : ""}" style="--rc:${isRace ? "var(--gold)" : CLASS_COLORS[x.name]}">
           <span class="rank-no">${i + 1}</span>
           <span class="rank-icon ${isRace ? factionClass(x.faction) : "cls"}">${isRace ? ICONS.race(x.name) : ICONS.cls(x.name)}</span>
-          <span class="rank-name">${x.name}${chosen ? `<em>選定</em>` : ""}${!isRace && x.rec ? `<em class="rec">推薦</em>` : ""}</span>
+          <span class="rank-name">${x.name}${chosen ? `<em>選定</em>` : ""}${!isRace && x.rec ? `<em class="rec">推薦</em>` : ""}${!isRace && x.fit ? `<em class="rec">${ROLE_NAMES[R.role]}</em>` : ""}</span>
           <span class="rank-bar"><i style="width:${x.m}%"></i></span>
           <span class="rank-pct">${x.m}%</span>
         </div>`;
@@ -383,6 +404,9 @@
       note = `你契合度最高的種族是<b>${topRace.name}</b>，但${topRace.name}在永恆服不能當${best.cls.name}，所以選了整體最契合的<b>${comboName(best)}</b>。`;
     else
       note = `分開看，你最契合的是<b>${topRace.name}</b>和<b>${topCls.name}</b>；兩者加總後，最契合的可選組合是<b>${comboName(best)}</b>。`;
+
+    const prefText = [R.role && ROLE_NAMES[R.role], R.faction && FACTION_NAMES[R.faction]].filter(Boolean).join("・");
+    if (prefText) note += `<br>（已依你想玩的<b>${prefText}</b>調整排序）`;
 
     const whyList = (arr) =>
       arr.length ? `<ul class="why-lines">${arr.map((x) => `<li><span class="pole">${x.pole}</span>${x.line}</li>`).join("")}</ul>` : "";
@@ -738,7 +762,7 @@
     ctx.strokeStyle = "#e6b35a55"; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(120, fy); ctx.lineTo(W - 120, fy); ctx.stroke();
     ctx.fillStyle = "#f3d9a1"; ctx.font = `700 34px ${serif}`;
-    ctx.fillText("你是哪個種族職業？20 題測出你的永恆服選角", W / 2, fy + 58);
+    ctx.fillText("你是哪個種族職業？22 題測出你的永恆服選角", W / 2, fy + 58);
     ctx.fillStyle = "#e6b35a"; ctx.font = `600 28px ${serif}`;
     ctx.fillText(SITE_URL.replace(/^https?:\/\//, "").replace(/\/$/, ""), W / 2, fy + 104);
     ctx.fillStyle = "#7f7466"; ctx.font = `400 22px ${serif}`;
@@ -838,7 +862,7 @@
   if (p.length === 4 && p.every((n) => Number.isFinite(n) && n >= 0 && n <= 100)) {
     const pct = {};
     ["E", "S", "T", "J"].forEach((k, i) => (pct[k] = p[i] === 50 ? 51 : p[i]));
-    renderResult(analyze(pct));
+    renderResult(analyze(pct, { role: qs.get("r") || "", faction: qs.get("f") || "" }));
   } else if (t === "IMSB") {
     openType("IMSB");
   } else if (TYPES[t]) {
